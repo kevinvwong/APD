@@ -1,0 +1,10 @@
+.next/
+node_modules/
+.env.local
+.env
+*.pdf
+__pycache__/
+*.pyc
+.vercel
+.env*
+!.env.example
