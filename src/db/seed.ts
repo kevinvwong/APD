@@ -7,6 +7,7 @@ import { neon } from "@neondatabase/serverless";
 import { fieldManuals } from "./schema";
 import { sql } from "drizzle-orm";
 import { parseFmNumber, parseTitleFromContent } from "../lib/fm";
+import { extractToc } from "../lib/toc";
 
 const db = drizzle(neon(process.env.DATABASE_URL!), {});
 
@@ -26,6 +27,7 @@ async function main() {
     const title = parseTitleFromContent(content, fm_number);
     const char_count = content.length;
     const word_count = content.split(/\s+/).filter(Boolean).length;
+    const toc = extractToc(content);
 
     await db.insert(fieldManuals).values({
       fm_number,
@@ -34,6 +36,7 @@ async function main() {
       content,
       word_count,
       char_count,
+      toc,
     });
 
     console.log(`  [${++inserted}/${files.length}] ${fm_number} — ${title.slice(0, 60)}`);

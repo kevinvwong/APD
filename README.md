@@ -22,7 +22,9 @@ into a Postgres table; the app then lets you search and read them.
 - **Search** by FM number, title, filename, *or full text* — backed by Postgres
   full-text search (weighted `tsvector` + GIN index) with relevance ranking,
   phrase (`"..."`), `OR`, and `-negation` support, and highlighted excerpts.
-- **Read** any manual with proper markdown rendering (headings, tables, lists).
+- **Read** any manual with proper markdown rendering (headings, tables, lists),
+  a sticky table-of-contents sidebar with scroll-spy, clickable heading
+  anchors, and a reading-progress bar.
 
 ## Getting started
 
