@@ -2,20 +2,9 @@ import { db } from "@/db";
 import { fieldManuals } from "@/db/schema";
 import { ilike, or } from "drizzle-orm";
 import Link from "next/link";
+import { buildExcerpt } from "@/lib/excerpt";
 
 export const dynamic = "force-dynamic";
-
-const EXCERPT_RADIUS = 90;
-
-// Pull a short snippet of context around the first match of `q` in `content`.
-function buildExcerpt(content: string, q: string): string | null {
-  const idx = content.toLowerCase().indexOf(q.toLowerCase());
-  if (idx === -1) return null;
-  const start = Math.max(0, idx - EXCERPT_RADIUS);
-  const end = Math.min(content.length, idx + q.length + EXCERPT_RADIUS);
-  const snippet = content.slice(start, end).replace(/\s+/g, " ").trim();
-  return `${start > 0 ? "… " : ""}${snippet}${end < content.length ? " …" : ""}`;
-}
 
 export default async function Home({
   searchParams,
