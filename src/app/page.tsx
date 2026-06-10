@@ -3,6 +3,8 @@ import { fieldManuals } from "@/db/schema";
 import { ilike, or } from "drizzle-orm";
 import Link from "next/link";
 import { AskPanel } from "@/components/AskPanel";
+import { SearchField, FmBadge } from "@/components/ui";
+import { ArrowRightIcon } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +39,7 @@ export default async function Home({
     <main className="mx-auto max-w-5xl px-4 py-10 sm:py-14">
       {/* Hero */}
       <section className="mb-10 text-center sm:mb-12">
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700">
+        <span className="brand-chip font-medium">
           <span className="h-1.5 w-1.5 rounded-full bg-brand-500" />
           51 active U.S. Army Field Manuals · full text
         </span>
@@ -77,21 +79,12 @@ export default async function Home({
             </p>
           </div>
 
-          <form className="relative w-full sm:w-72">
-            <svg
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-              viewBox="0 0 24 24"
-              fill="none"
-              aria-hidden
-            >
-              <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
-              <path d="m20 20-3-3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-            <input
+          <form className="w-full sm:w-72">
+            <SearchField
+              containerClassName="w-full"
               name="q"
               defaultValue={q}
               placeholder="Filter by FM number or title…"
-              className="w-full rounded-xl border border-gray-300 bg-white py-2 pl-9 pr-3 text-sm shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
             />
           </form>
         </div>
@@ -117,9 +110,7 @@ export default async function Home({
                   className="group flex h-full flex-col rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-brand-400 hover:shadow-md"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="rounded-md bg-brand-50 px-2 py-0.5 font-mono text-xs font-bold text-brand-700">
-                      {fm.fm_number}
-                    </span>
+                    <FmBadge>{fm.fm_number}</FmBadge>
                     <span className="text-[11px] text-gray-400">
                       {fm.word_count.toLocaleString()} words
                     </span>
@@ -127,17 +118,9 @@ export default async function Home({
                   <p className="mt-2 font-medium leading-snug text-gray-900 group-hover:text-brand-700">
                     {fm.title}
                   </p>
-                  <span className="mt-auto pt-3 inline-flex items-center gap-1 text-xs font-medium text-brand-600 opacity-0 transition group-hover:opacity-100">
+                  <span className="mt-auto inline-flex items-center gap-1 pt-3 text-xs font-medium text-brand-600 opacity-0 transition group-hover:opacity-100">
                     Open manual
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden>
-                      <path
-                        d="M5 12h14m-6-6 6 6-6 6"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
+                    <ArrowRightIcon className="h-3.5 w-3.5" />
                   </span>
                 </Link>
               </li>

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ExternalLinkIcon } from "@/components/icons";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -65,15 +66,7 @@ function SiteHeader() {
             className="hidden items-center gap-1 text-brand-300 transition-colors hover:text-white sm:flex"
           >
             armypubs.army.mil
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden>
-              <path
-                d="M7 17 17 7M17 7H8M17 7v9"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            <ExternalLinkIcon className="h-3 w-3" />
           </a>
         </nav>
       </div>

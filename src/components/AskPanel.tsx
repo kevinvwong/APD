@@ -8,6 +8,8 @@ import {
   type AskMode,
   type ChatTurn,
 } from "@/lib/ask-client";
+import { SparkIcon, SendIcon, ArrowRightIcon } from "./icons";
+import { SearchField } from "./ui";
 
 interface Props {
   fmId?: number | null;
@@ -83,16 +85,13 @@ export function AskPanel({ fmId }: Props) {
       <div className="space-y-4 p-4 sm:p-5">
         {/* Question input */}
         <form onSubmit={submit} className="flex items-center gap-2">
-          <div className="relative flex-1">
-            <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            <input
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              placeholder={fmId ? "Ask about this manual…" : "Ask about any Field Manual…"}
-              className="w-full rounded-xl border border-gray-300 bg-white py-2.5 pl-9 pr-3 text-sm shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30 disabled:opacity-60"
-              disabled={busy}
-            />
-          </div>
+          <SearchField
+            containerClassName="flex-1"
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            placeholder={fmId ? "Ask about this manual…" : "Ask about any Field Manual…"}
+            disabled={busy}
+          />
           <button
             type="submit"
             disabled={busy || !question.trim()}
@@ -138,7 +137,7 @@ export function AskPanel({ fmId }: Props) {
                   setQuestion(ex);
                   run(ex);
                 }}
-                className="rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs text-brand-700 transition hover:border-brand-400 hover:bg-brand-100"
+                className="brand-chip transition hover:border-brand-400 hover:bg-brand-100"
               >
                 {ex}
               </button>
@@ -185,9 +184,7 @@ export function AskPanel({ fmId }: Props) {
                         href={sectionHref(s)}
                         className="group flex items-start gap-2.5 rounded-lg border border-gray-100 bg-white px-3 py-2 transition hover:border-brand-300 hover:bg-brand-50/40"
                       >
-                        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-100 font-mono text-[10px] font-bold text-amber-700">
-                          {i + 1}
-                        </span>
+                        <CiteBadge n={i + 1} />
                         <span className="text-xs leading-snug">
                           <span className="font-mono font-semibold text-brand-700">
                             {s.n}
@@ -197,7 +194,7 @@ export function AskPanel({ fmId }: Props) {
                             {s.h}
                           </span>
                         </span>
-                        <ArrowIcon className="ml-auto mt-1 h-3.5 w-3.5 shrink-0 text-gray-300 transition group-hover:translate-x-0.5 group-hover:text-brand-500" />
+                        <ArrowRightIcon className="ml-auto mt-1 h-3.5 w-3.5 shrink-0 text-gray-300 transition group-hover:translate-x-0.5 group-hover:text-brand-500" />
                       </a>
                     </li>
                   ))}
@@ -245,6 +242,23 @@ function ModeToggle({
   );
 }
 
+/** Gold numbered citation chip. Renders as a link (inline `[n]` tokens) when
+ *  `href` is given, otherwise a static marker (the Sources list). */
+function CiteBadge({ n, href }: { n: number; href?: string }) {
+  const base =
+    "inline-flex items-center justify-center rounded-full bg-amber-100 font-mono font-bold text-amber-700";
+  if (href) {
+    return (
+      <a href={href} className={`${base} h-4 min-w-4 px-1 text-[9px] align-baseline transition hover:bg-amber-200`}>
+        {n}
+      </a>
+    );
+  }
+  return (
+    <span className={`${base} mt-0.5 h-5 w-5 shrink-0 text-[10px]`}>{n}</span>
+  );
+}
+
 // Renders the answer text, turning [n] tokens into numbered badge anchors.
 function Answer({ text, sourceCount }: { text: string; sourceCount: number }) {
   const parts = text.split(/(\[\d+(?:,\d+)*\])/g);
@@ -261,13 +275,7 @@ function Answer({ text, sourceCount }: { text: string; sourceCount: number }) {
           return (
             <span key={i} className="inline-flex gap-0.5 align-baseline">
               {nums.map((n) => (
-                <a
-                  key={n}
-                  href={`#src-${n}`}
-                  className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-100 px-1 font-mono text-[9px] font-bold text-amber-700 transition hover:bg-amber-200"
-                >
-                  {n}
-                </a>
+                <CiteBadge key={n} n={n} href={`#src-${n}`} />
               ))}
             </span>
           );
@@ -275,47 +283,5 @@ function Answer({ text, sourceCount }: { text: string; sourceCount: number }) {
         return <span key={i}>{part}</span>;
       })}
     </div>
-  );
-}
-
-/* --- inline icons (no dependency) --- */
-function SearchIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
-      <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
-      <path d="m20 20-3-3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
-}
-function SendIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path
-        d="M4 12 20 4l-5 16-3.5-6L4 12Z"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-function SparkIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-      <path d="M12 2c.6 4.4 2.6 6.4 7 7-4.4.6-6.4 2.6-7 7-.6-4.4-2.6-6.4-7-7 4.4-.6 6.4-2.6 7-7Z" />
-    </svg>
-  );
-}
-function ArrowIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path
-        d="M5 12h14m-6-6 6 6-6 6"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
   );
 }

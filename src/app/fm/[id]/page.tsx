@@ -5,6 +5,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { parseFM, type Block } from "@/lib/fm-parse";
 import { AskPanel } from "@/components/AskPanel";
+import { FmBadge, TocList } from "@/components/ui";
+import { ArrowLeftIcon } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
 
@@ -44,23 +46,13 @@ export default async function FmPage({
         href="/"
         className="mb-5 inline-flex items-center gap-1.5 text-sm text-gray-500 transition hover:text-brand-700"
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
-          <path
-            d="M19 12H5m6 6-6-6 6-6"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+        <ArrowLeftIcon className="h-3.5 w-3.5" />
         All Field Manuals
       </Link>
 
       {/* Title block */}
       <header className="mb-6 border-b border-gray-200 pb-6">
-        <span className="inline-block rounded-md bg-brand-50 px-2 py-0.5 font-mono text-sm font-bold text-brand-700">
-          {fm.fm_number}
-        </span>
+        <FmBadge className="text-sm">{fm.fm_number}</FmBadge>
         <h1 className="mt-2 font-serif text-3xl font-bold tracking-tight text-gray-900">
           {fm.title}
         </h1>
@@ -90,22 +82,7 @@ export default async function FmPage({
               <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
                 Contents
               </p>
-              <ol className="space-y-1 border-l border-gray-200">
-                {doc.toc.map((e) => (
-                  <li key={e.id}>
-                    <a
-                      href={`#${e.id}`}
-                      className={`-ml-px block border-l-2 py-0.5 text-sm transition ${
-                        e.level === 2
-                          ? "border-transparent pl-5 text-gray-500 hover:border-brand-300 hover:text-brand-700"
-                          : "border-transparent pl-3 font-medium text-gray-700 hover:border-brand-500 hover:text-brand-800"
-                      }`}
-                    >
-                      {e.text}
-                    </a>
-                  </li>
-                ))}
-              </ol>
+              <TocList entries={doc.toc} variant="sidebar" />
             </nav>
           </aside>
         )}
@@ -122,15 +99,7 @@ export default async function FmPage({
               <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wide text-gray-500">
                 Contents
               </summary>
-              <ol className="mt-3 space-y-1">
-                {doc.toc.map((e) => (
-                  <li key={e.id} className={e.level === 2 ? "pl-4" : ""}>
-                    <a href={`#${e.id}`} className="text-sm text-brand-700 hover:underline">
-                      {e.text}
-                    </a>
-                  </li>
-                ))}
-              </ol>
+              <TocList entries={doc.toc} variant="mobile" />
             </details>
           )}
 

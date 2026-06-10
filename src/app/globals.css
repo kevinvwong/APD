@@ -59,6 +59,21 @@
 }
 
 @layer components {
+  /* Brand "chip": a small rounded-full brand-tinted pill, used for the hero
+     badge and the example-prompt buttons. */
+  .brand-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    border-radius: 9999px;
+    border: 1px solid var(--color-brand-200);
+    background-color: var(--color-brand-50);
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    color: var(--color-brand-700);
+  }
+
   /* Cross-references emitted by the FM parser (e.g. <span class="xref">FM 3-0</span>). */
   .xref {
     font-family: var(--font-mono);
