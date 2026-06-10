@@ -11,7 +11,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:seed": "npx tsx src/db/seed.ts",
-    "search:index": "tsx scripts/build-search-index.ts"
+    "search:index": "tsx scripts/build-search-index.ts",
+    "index:db": "tsx scripts/index-sections-to-db.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.104.1",
