@@ -1,10 +1,50 @@
 import { db } from "@/db";
 import { fieldManuals } from "@/db/schema";
-import { ilike, or } from "drizzle-orm";
+import { desc } from "drizzle-orm";
 import Link from "next/link";
-import { buildExcerpt } from "@/lib/excerpt";
+import { ftsWhere, ftsRank, ftsHeadline, headlineToHtml } from "@/lib/search";
 
 export const dynamic = "force-dynamic";
+
+const baseColumns = {
+  id: fieldManuals.id,
+  fm_number: fieldManuals.fm_number,
+  title: fieldManuals.title,
+  filename: fieldManuals.filename,
+  word_count: fieldManuals.word_count,
+};
+
+type Row = {
+  id: number;
+  fm_number: string;
+  title: string;
+  filename: string;
+  word_count: number;
+  excerptHtml: string | null;
+};
+
+async function runSearch(query: string | undefined): Promise<Row[]> {
+  if (query) {
+    // Full-text search: rank by relevance (weighted title/number > body), with
+    // a highlighted ts_headline excerpt.
+    const rows = await db
+      .select({ ...baseColumns, excerpt: ftsHeadline(query) })
+      .from(fieldManuals)
+      .where(ftsWhere(query))
+      .orderBy(desc(ftsRank(query)), fieldManuals.fm_number);
+
+    return rows.map(({ excerpt, ...r }) => {
+      const { html, hasMatch } = headlineToHtml(excerpt ?? "");
+      return { ...r, excerptHtml: hasMatch ? html : null };
+    });
+  }
+
+  const rows = await db
+    .select(baseColumns)
+    .from(fieldManuals)
+    .orderBy(fieldManuals.fm_number);
+  return rows.map((r) => ({ ...r, excerptHtml: null }));
+}
 
 export default async function Home({
   searchParams,
@@ -12,29 +52,8 @@ export default async function Home({
   searchParams: Promise<{ q?: string }>;
 }) {
   const { q } = await searchParams;
-  const query = q?.trim();
-
-  const fms = await db
-    .select({
-      id: fieldManuals.id,
-      fm_number: fieldManuals.fm_number,
-      title: fieldManuals.title,
-      filename: fieldManuals.filename,
-      word_count: fieldManuals.word_count,
-      content: fieldManuals.content,
-    })
-    .from(fieldManuals)
-    .where(
-      query
-        ? or(
-            ilike(fieldManuals.fm_number, `%${query}%`),
-            ilike(fieldManuals.title, `%${query}%`),
-            ilike(fieldManuals.filename, `%${query}%`),
-            ilike(fieldManuals.content, `%${query}%`)
-          )
-        : undefined
-    )
-    .orderBy(fieldManuals.fm_number);
+  const query = q?.trim() || undefined;
+  const fms = await runSearch(query);
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-12">
@@ -84,41 +103,30 @@ export default async function Home({
         </p>
       ) : (
         <ul className="divide-y divide-gray-200">
-          {fms.map((fm) => {
-            // Only surface a body excerpt when the match isn't already obvious
-            // from the number/title/filename.
-            const inMeta =
-              !!query &&
-              [fm.fm_number, fm.title, fm.filename].some((f) =>
-                f.toLowerCase().includes(query.toLowerCase())
-              );
-            const excerpt =
-              query && !inMeta ? buildExcerpt(fm.content, query) : null;
-
-            return (
-              <li key={fm.id} className="py-4">
-                <Link href={`/fm/${fm.id}`} className="group">
-                  <div className="flex items-baseline justify-between">
-                    <span className="font-mono text-sm font-semibold text-gray-400 group-hover:text-black">
-                      {fm.fm_number}
-                    </span>
-                    <span className="text-xs text-gray-400">
-                      {fm.word_count.toLocaleString()} words
-                    </span>
-                  </div>
-                  <p className="mt-0.5 font-medium group-hover:underline">
-                    {fm.title}
-                  </p>
-                  <p className="text-xs text-gray-400 mt-0.5">{fm.filename}</p>
-                  {excerpt && (
-                    <p className="mt-1.5 text-xs text-gray-500 italic">
-                      {excerpt}
-                    </p>
-                  )}
-                </Link>
-              </li>
-            );
-          })}
+          {fms.map((fm) => (
+            <li key={fm.id} className="py-4">
+              <Link href={`/fm/${fm.id}`} className="group">
+                <div className="flex items-baseline justify-between">
+                  <span className="font-mono text-sm font-semibold text-gray-400 group-hover:text-black">
+                    {fm.fm_number}
+                  </span>
+                  <span className="text-xs text-gray-400">
+                    {fm.word_count.toLocaleString()} words
+                  </span>
+                </div>
+                <p className="mt-0.5 font-medium group-hover:underline">
+                  {fm.title}
+                </p>
+                <p className="text-xs text-gray-400 mt-0.5">{fm.filename}</p>
+                {fm.excerptHtml && (
+                  <p
+                    className="mt-1.5 text-xs text-gray-500 italic [&_mark]:bg-yellow-200 [&_mark]:text-gray-900 [&_mark]:not-italic [&_mark]:rounded-sm [&_mark]:px-0.5"
+                    dangerouslySetInnerHTML={{ __html: fm.excerptHtml }}
+                  />
+                )}
+              </Link>
+            </li>
+          ))}
         </ul>
       )}
     </main>

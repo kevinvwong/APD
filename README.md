@@ -19,8 +19,9 @@ into a Postgres table; the app then lets you search and read them.
 ## Features
 
 - **Browse** all active FMs, ordered by FM number.
-- **Search** by FM number, title, filename, *or full text* of the manual.
-  Body matches show a short excerpt of the surrounding context.
+- **Search** by FM number, title, filename, *or full text* — backed by Postgres
+  full-text search (weighted `tsvector` + GIN index) with relevance ranking,
+  phrase (`"..."`), `OR`, and `-negation` support, and highlighted excerpts.
 - **Read** any manual with proper markdown rendering (headings, tables, lists).
 
 ## Getting started
@@ -35,6 +36,7 @@ cp .env.example .env.local
 # → set DATABASE_URL (and DATABASE_URL_UNPOOLED) in .env.local
 
 npm run db:push    # create the field_manuals table
+npm run db:sql     # apply hand-written DDL (full-text search column + GIN index)
 npm run db:seed    # load the 51 markdown FMs from fm-md/ into the DB
 
 npm run dev        # http://localhost:3000
@@ -51,7 +53,10 @@ npm run dev        # http://localhost:3000
 | `npm run db:generate`| Generate Drizzle migrations from the schema  |
 | `npm run db:migrate` | Apply migrations                             |
 | `npm run db:push`    | Push the schema directly to the database     |
+| `npm run db:sql`     | Apply hand-written DDL in `drizzle/sql/` (FTS, indexes) |
 | `npm run db:seed`    | Seed the database from `fm-md/`              |
+| `npm run test`       | Run the Vitest suite                         |
+| `npm run typecheck`  | Type-check with `tsc --noEmit`              |
 
 ## Project layout
 
