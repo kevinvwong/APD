@@ -5,6 +5,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { parseFM, type Block } from "@/lib/fm-parse";
 import { AskPanel } from "@/components/AskPanel";
+import { FmBadge, TocList } from "@/components/ui";
+import { ArrowLeftIcon } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
 
@@ -31,121 +33,146 @@ export default async function FmPage({
   for (const block of doc.blocks) {
     if (block.type === "li") {
       const last = groups[groups.length - 1];
-      if (last?.type === "list") {
-        last.items.push(block);
-      } else {
-        groups.push({ type: "list", items: [block] });
-      }
+      if (last?.type === "list") last.items.push(block);
+      else groups.push({ type: "list", items: [block] });
     } else {
       groups.push({ type: "single", block });
     }
   }
 
   return (
-    <main className="max-w-4xl mx-auto px-4 py-12">
+    <div className="mx-auto max-w-6xl px-4 py-8">
       <Link
         href="/"
-        className="text-sm text-gray-500 hover:underline mb-6 block"
+        className="mb-5 inline-flex items-center gap-1.5 text-sm text-gray-500 transition hover:text-brand-700"
       >
-        &larr; All Field Manuals
+        <ArrowLeftIcon className="h-3.5 w-3.5" />
+        All Field Manuals
       </Link>
 
-      <div className="mb-6">
-        <span className="font-mono text-sm text-gray-400">{fm.fm_number}</span>
-        <h1 className="text-2xl font-bold mt-1">{fm.title}</h1>
-        <p className="text-xs text-gray-400 mt-1">
-          {fm.filename} &middot; {fm.word_count.toLocaleString()} words
-          {doc.meta.date && <> &middot; {doc.meta.date}</>}
+      {/* Title block */}
+      <header className="mb-6 border-b border-gray-200 pb-6">
+        <FmBadge className="text-sm">{fm.fm_number}</FmBadge>
+        <h1 className="mt-2 font-serif text-3xl font-bold tracking-tight text-gray-900">
+          {fm.title}
+        </h1>
+        <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-400">
+          <span className="font-mono">{fm.filename}</span>
+          <span aria-hidden>·</span>
+          <span>{fm.word_count.toLocaleString()} words</span>
+          {doc.meta.date && (
+            <>
+              <span aria-hidden>·</span>
+              <span>{doc.meta.date}</span>
+            </>
+          )}
+          {doc.meta.restriction && (
+            <span className="rounded bg-amber-50 px-1.5 py-0.5 text-amber-700">
+              {doc.meta.restriction}
+            </span>
+          )}
         </p>
-      </div>
+      </header>
 
-      <div className="mb-8">
-        <AskPanel fmId={fm.id} />
-      </div>
-
-      {doc.toc.length > 0 && (
-        <nav className="mb-8 border border-gray-200 rounded p-4 bg-gray-50">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-            Contents
-          </p>
-          <ol className="space-y-1">
-            {doc.toc.map((e) => (
-              <li key={e.id} className={e.level === 2 ? "pl-4" : ""}>
-                <a
-                  href={`#${e.id}`}
-                  className="text-sm text-blue-600 hover:underline"
-                >
-                  {e.text}
-                </a>
-              </li>
-            ))}
-          </ol>
-        </nav>
-      )}
-
-      <article className="space-y-2 text-sm leading-relaxed">
-        {groups.map((g, i) =>
-          g.type === "list" ? (
-            <ul
-              key={`list-${i}`}
-              className="list-disc list-inside pl-4 space-y-0.5"
-            >
-              {g.items.map((b, j) => (
-                <li key={j} dangerouslySetInnerHTML={{ __html: b.html }} />
-              ))}
-            </ul>
-          ) : (
-            <BlockRenderer
-              key={g.block.type === "h" ? g.block.id : `${g.block.type}-${i}`}
-              block={g.block}
-            />
-          ),
+      <div className="lg:grid lg:grid-cols-[15rem_1fr] lg:gap-10">
+        {/* Sidebar TOC (desktop) */}
+        {doc.toc.length > 0 && (
+          <aside className="hidden lg:block">
+            <nav className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto pr-2">
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+                Contents
+              </p>
+              <TocList entries={doc.toc} variant="sidebar" />
+            </nav>
+          </aside>
         )}
-      </article>
-    </main>
+
+        {/* Main column */}
+        <div className="min-w-0">
+          <div className="mb-8">
+            <AskPanel fmId={fm.id} />
+          </div>
+
+          {/* Collapsible TOC (mobile) */}
+          {doc.toc.length > 0 && (
+            <details className="mb-8 rounded-xl border border-gray-200 bg-white p-4 lg:hidden">
+              <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wide text-gray-500">
+                Contents
+              </summary>
+              <TocList entries={doc.toc} variant="mobile" />
+            </details>
+          )}
+
+          <article className="fm-article space-y-2.5 text-[15px] leading-relaxed">
+            {groups.map((g, i) =>
+              g.type === "list" ? (
+                <ul
+                  key={`list-${i}`}
+                  className="ml-1 list-disc space-y-1 pl-5 marker:text-brand-400"
+                >
+                  {g.items.map((b, j) => (
+                    <li key={j} dangerouslySetInnerHTML={{ __html: b.html }} />
+                  ))}
+                </ul>
+              ) : (
+                <BlockRenderer
+                  key={g.block.type === "h" ? g.block.id : `${g.block.type}-${i}`}
+                  block={g.block}
+                />
+              )
+            )}
+          </article>
+        </div>
+      </div>
+    </div>
   );
 }
 
 function BlockRenderer({ block }: { block: Block }) {
   switch (block.type) {
     case "h": {
-      const Tag = (
-        block.level === 1 ? "h2" : block.level === 2 ? "h3" : "h4"
-      ) as "h2" | "h3" | "h4";
-      const cls =
-        block.level === 1
-          ? "text-xl font-bold mt-8 mb-2 border-b border-gray-200 pb-1"
-          : block.level === 2
-            ? "text-base font-semibold mt-6 mb-1"
-            : "text-sm font-semibold mt-4 mb-0.5 text-gray-700";
+      if (block.level === 1) {
+        return (
+          <h2
+            id={block.id}
+            className="mt-10 mb-3 border-b border-gray-200 pb-1.5 font-serif text-2xl font-bold text-gray-900 first:mt-0"
+          >
+            {block.text}
+          </h2>
+        );
+      }
+      if (block.level === 2) {
+        return (
+          <h3 id={block.id} className="mt-7 mb-1.5 text-lg font-semibold text-gray-900">
+            {block.text}
+          </h3>
+        );
+      }
       return (
-        <Tag id={block.id} className={cls}>
+        <h4 id={block.id} className="mt-5 mb-1 text-sm font-semibold uppercase tracking-wide text-brand-700">
           {block.text}
-        </Tag>
+        </h4>
       );
     }
     case "p":
       return <p dangerouslySetInnerHTML={{ __html: block.html }} />;
     case "fig":
       return (
-        <p className="text-xs text-gray-500 italic">
-          <strong>{block.label}.</strong> {block.text}
+        <p className="border-l-2 border-brand-200 bg-brand-50/40 py-1.5 pl-3 text-sm text-gray-600">
+          <strong className="font-semibold text-brand-700">{block.label}.</strong>{" "}
+          <span className="italic">{block.text}</span>
         </p>
       );
     case "tr":
       return (
         <div
-          className="grid gap-2 border-b border-gray-100 py-1"
+          className="grid gap-2 border-b border-gray-100 py-1.5 text-sm"
           style={{
             gridTemplateColumns: `repeat(${block.cells.length}, minmax(0, 1fr))`,
           }}
         >
           {block.cells.map((c, i) => (
-            <span
-              key={i}
-              className="text-xs"
-              dangerouslySetInnerHTML={{ __html: c }}
-            />
+            <span key={i} dangerouslySetInnerHTML={{ __html: c }} />
           ))}
         </div>
       );
