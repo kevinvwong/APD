@@ -9,13 +9,31 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
-import { retrieve } from "@/lib/retrieve";
+import { retrieve, type Section } from "@/lib/retrieve";
+import { retrieve as retrievePg } from "@/lib/retrieve-pg";
 import { buildPrompt, type AskMode, type ChatTurn } from "@/lib/ask-prompt";
 
 export const runtime = "nodejs"; // needs fs to read the index
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 const MODEL = process.env.ANTHROPIC_MODEL || "claude-haiku-4-5";
+
+// Retrieval backend selector. Default ("json") keeps the existing,
+// build-safe JSON-file path. Set RETRIEVE_BACKEND=pg to use the OPTIONAL
+// Postgres full-text path (src/lib/retrieve-pg.ts), which requires a live DB
+// with the fm_sections table + tsvector index populated. Both share the same
+// (question, k, restrictFm) -> Section[] contract; retrievePg is async.
+const USE_PG = process.env.RETRIEVE_BACKEND === "pg";
+
+async function getSources(
+  question: string,
+  k: number,
+  restrictFm: number | null,
+): Promise<Section[]> {
+  return USE_PG
+    ? retrievePg(question, k, restrictFm)
+    : retrieve(question, k, restrictFm);
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -47,7 +65,7 @@ export async function POST(req: NextRequest) {
         { status: 400 },
       );
 
-    const sources = retrieve(question, 8, fmId);
+    const sources = await getSources(question, 8, fmId);
 
     if (!sources.length && mode === "library") {
       return NextResponse.json({
