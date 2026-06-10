@@ -10,9 +10,11 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
-    "db:seed": "npx tsx src/db/seed.ts"
+    "db:seed": "npx tsx src/db/seed.ts",
+    "search:index": "tsx scripts/build-search-index.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.104.1",
     "@neondatabase/serverless": "^1.1.0",
     "@tailwindcss/postcss": "^4.3.0",
     "@types/node": "^25.9.2",
