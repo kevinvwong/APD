@@ -1,7 +1,13 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { askLibrary, sectionHref, type AskResult, type AskMode, type ChatTurn } from "@/lib/ask-client";
+import {
+  askLibrary,
+  sectionHref,
+  type AskResult,
+  type AskMode,
+  type ChatTurn,
+} from "@/lib/ask-client";
 
 interface Props {
   fmId?: number | null;
@@ -30,11 +36,22 @@ export function AskPanel({ fmId }: Props) {
     setResult(null);
 
     try {
-      const res = await askLibrary({ question: q, mode, fmId, history, signal: ctrl.signal });
+      const res = await askLibrary({
+        question: q,
+        mode,
+        fmId,
+        history,
+        signal: ctrl.signal,
+      });
       setResult(res);
-      setHistory((h) => [...h.slice(-6), { role: "user", text: q }, { role: "assistant", text: res.answer }]);
+      setHistory((h) => [
+        ...h.slice(-6),
+        { role: "user", text: q },
+        { role: "assistant", text: res.answer },
+      ]);
     } catch (err: any) {
-      if (err?.name !== "AbortError") setError(err?.message || "Request failed.");
+      if (err?.name !== "AbortError")
+        setError(err?.message || "Request failed.");
     } finally {
       setBusy(false);
     }
@@ -43,7 +60,9 @@ export function AskPanel({ fmId }: Props) {
   return (
     <div className="border border-gray-200 rounded-lg p-4 space-y-3 bg-white">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-semibold text-gray-700">Ask the doctrine assistant</span>
+        <span className="text-sm font-semibold text-gray-700">
+          Ask the doctrine assistant
+        </span>
         <div className="flex gap-1 text-xs">
           {(["library", "open"] as AskMode[]).map((m) => (
             <button
@@ -79,7 +98,11 @@ export function AskPanel({ fmId }: Props) {
         {history.length > 0 && (
           <button
             type="button"
-            onClick={() => { setHistory([]); setResult(null); setError(null); }}
+            onClick={() => {
+              setHistory([]);
+              setResult(null);
+              setError(null);
+            }}
             className="px-3 py-1.5 text-xs text-gray-400 border border-gray-200 rounded hover:text-gray-600"
           >
             Clear
@@ -94,10 +117,16 @@ export function AskPanel({ fmId }: Props) {
           <Answer text={result.answer} sourceCount={result.sources.length} />
           {result.sources.length > 0 && (
             <div className="space-y-1">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Sources</p>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                Sources
+              </p>
               <ul className="space-y-1">
                 {result.sources.map((s, i) => (
-                  <li key={i} className="flex items-baseline gap-2 text-xs">
+                  <li
+                    key={i}
+                    id={`src-${i + 1}`}
+                    className="flex items-baseline gap-2 text-xs"
+                  >
                     <span className="shrink-0 w-5 h-5 flex items-center justify-center rounded-full bg-gray-100 text-gray-600 font-mono font-bold text-[10px]">
                       {i + 1}
                     </span>
@@ -107,7 +136,9 @@ export function AskPanel({ fmId }: Props) {
                     >
                       <span className="font-mono text-gray-500">{s.n}</span>
                       {" — "}
-                      {s.c ? <span className="text-gray-400">{s.c} &rsaquo; </span> : null}
+                      {s.c ? (
+                        <span className="text-gray-400">{s.c} &rsaquo; </span>
+                      ) : null}
                       {s.h}
                     </a>
                   </li>
@@ -129,7 +160,10 @@ function Answer({ text, sourceCount }: { text: string; sourceCount: number }) {
       {parts.map((part, i) => {
         const m = part.match(/^\[(\d+(?:,\d+)*)\]$/);
         if (m) {
-          const nums = m[1].split(",").map(Number).filter((n) => n >= 1 && n <= sourceCount);
+          const nums = m[1]
+            .split(",")
+            .map(Number)
+            .filter((n) => n >= 1 && n <= sourceCount);
           if (!nums.length) return <span key={i}>{part}</span>;
           return (
             <span key={i} className="inline-flex gap-0.5">

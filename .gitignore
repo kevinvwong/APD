@@ -8,5 +8,4 @@ __pycache__/
 .vercel
 .env*
 !.env.example
-src/data/search-index.json
 tsconfig.tsbuildinfo
