@@ -1,11 +1,24 @@
+# Next.js
 .next/
 node_modules/
-.env.local
+tsconfig.tsbuildinfo
+
+# Environment — never commit real credentials
 .env
-*.pdf
-__pycache__/
-*.pyc
-.vercel
+.env.local
 .env*
 !.env.example
-tsconfig.tsbuildinfo
+
+# Vercel
+.vercel
+
+# Claude Code session data
+.claude/
+
+# Python (FM acquisition scripts)
+__pycache__/
+*.pyc
+*.pdf
+
+# Generated — rebuild with: npm run search:index
+# src/data/search-index.json  ← committed intentionally so deploys work without DB at build time
