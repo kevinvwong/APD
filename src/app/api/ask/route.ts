@@ -35,14 +35,52 @@ async function getSources(
     : retrieve(question, k, restrictFm);
 }
 
+// Input bounds — keep the LLM context (and abuse surface) small and predictable.
+const MAX_QUESTION_CHARS = 2000; // matches the client-side UX limit
+const MAX_HISTORY_TURNS = 4; // only the last few turns are useful for context
+const MAX_HISTORY_TEXT_CHARS = 2000; // per-turn cap so a single turn can't blow up the prompt
+const MAX_BODY_BYTES = 64 * 1024; // generous for question + a few short history turns
+const MAX_FM_ID = 100_000; // far above any real FM id; rejects absurd/huge ids
+
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json().catch(() => ({}));
-    const question: string = (body.question || "").toString().trim();
+    // Defensive body-size cap: reject obviously oversized payloads before we
+    // buffer/parse them. Content-Length can be spoofed/absent, so we also guard
+    // on the actual parsed text below.
+    const contentLength = Number(req.headers.get("content-length") || 0);
+    if (contentLength > MAX_BODY_BYTES) {
+      return NextResponse.json({ error: "Payload too large." }, { status: 413 });
+    }
+
+    const raw = await req.text();
+    if (raw.length > MAX_BODY_BYTES) {
+      return NextResponse.json({ error: "Payload too large." }, { status: 413 });
+    }
+
+    let body: any;
+    try {
+      body = JSON.parse(raw);
+    } catch {
+      body = {};
+    }
+    if (typeof body !== "object" || body === null) body = {};
+
+    const question: string = (body.question ?? "").toString().trim();
+
+    // mode must be exactly one of the known values; anything else -> "library".
     const mode: AskMode = body.mode === "open" ? "open" : "library";
-    const fmId: number | null = body.fmId ? Number(body.fmId) : null;
+
+    // fmId: accept only a positive, in-range integer; otherwise treat as "no filter".
+    let fmId: number | null = null;
+    if (body.fmId !== null && body.fmId !== undefined && body.fmId !== "") {
+      const n = Number(body.fmId);
+      if (Number.isInteger(n) && n > 0 && n <= MAX_FM_ID) fmId = n;
+    }
+
+    // history: take only the last few turns, coerce/drop malformed entries, and
+    // cap each turn's text. This is the prompt-injection surface, so be strict.
     const rawHistory: unknown[] = Array.isArray(body.history)
-      ? body.history.slice(-4)
+      ? body.history.slice(-MAX_HISTORY_TURNS)
       : [];
     const safeHistory: ChatTurn[] = rawHistory
       .filter((m): m is ChatTurn => {
@@ -55,11 +93,11 @@ export async function POST(req: NextRequest) {
           text.trim().length > 0
         );
       })
-      .map((m) => ({ role: m.role, text: m.text.slice(0, 2000) }));
+      .map((m) => ({ role: m.role, text: m.text.slice(0, MAX_HISTORY_TEXT_CHARS) }));
 
     if (!question)
       return NextResponse.json({ error: "Missing question." }, { status: 400 });
-    if (question.length > 2000)
+    if (question.length > MAX_QUESTION_CHARS)
       return NextResponse.json(
         { error: "Question too long." },
         { status: 400 },
@@ -99,6 +137,8 @@ export async function POST(req: NextRequest) {
       })),
     });
   } catch (e: any) {
+    // Log full detail server-side only; never leak SDK/internal messages to the
+    // client. Preserve 429 (rate limit) passthrough; map auth errors to 503.
     console.error("[/api/ask]", e);
     const status = e?.status === 429 ? 429 : e?.status === 401 ? 503 : 500;
     return NextResponse.json({ error: "Assistant unavailable." }, { status });
