@@ -1,0 +1,461 @@
+[
+  {
+    "fm_number": "FM 1-000",
+    "title": "Foreword",
+    "filename": "ARN43687-FM_1-000-WEB-2",
+    "file": "ARN43687-FM_1-000-WEB-2.md",
+    "word_count": 23306,
+    "char_count": 153034,
+    "id": 1
+  },
+  {
+    "fm_number": "FM 1-02.1",
+    "title": "OPERATIONAL TERMS",
+    "filename": "ARN46659-FM_1-02.1-000-WEB-1",
+    "file": "ARN46659-FM_1-02.1-000-WEB-1.md",
+    "word_count": 70489,
+    "char_count": 491874,
+    "id": 2
+  },
+  {
+    "fm_number": "FM 1-02.2",
+    "title": "MILITARY SYMBOLS",
+    "filename": "ARN44621-FM_1-02.2-001-WEB-3",
+    "file": "ARN44621-FM_1-02.2-001-WEB-3.md",
+    "word_count": 56595,
+    "char_count": 427381,
+    "id": 3
+  },
+  {
+    "fm_number": "FM 2-0",
+    "title": "INTELLIGENCE",
+    "filename": "ARN39259-FM_2-0-000-WEB-2",
+    "file": "ARN39259-FM_2-0-000-WEB-2.md",
+    "word_count": 146962,
+    "char_count": 1107552,
+    "id": 4
+  },
+  {
+    "fm_number": "FM 2-22.3",
+    "title": "HUMAN INTELLIGENCE",
+    "filename": "ARN43392-FM_2-22.3-001-WEB-4",
+    "file": "ARN43392-FM_2-22.3-001-WEB-4.md",
+    "word_count": 142034,
+    "char_count": 999485,
+    "id": 5
+  },
+  {
+    "fm_number": "FM 3-0",
+    "title": "OPERATIONS",
+    "filename": "ARN43326-FM_3-0-000-WEB-1",
+    "file": "ARN43326-FM_3-0-000-WEB-1.md",
+    "word_count": 146056,
+    "char_count": 1051658,
+    "id": 6
+  },
+  {
+    "fm_number": "FM 3-01",
+    "title": "U.S. Army Air and Missile",
+    "filename": "ARN44767-FM_3-01-000-WEB-1",
+    "file": "ARN44767-FM_3-01-000-WEB-1.md",
+    "word_count": 99350,
+    "char_count": 706102,
+    "id": 7
+  },
+  {
+    "fm_number": "FM 3-01.44",
+    "title": "Short-Range Air Defense",
+    "filename": "ARN35838-FM_3-01.44-000-WEB-1",
+    "file": "ARN35838-FM_3-01.44-000-WEB-1.md",
+    "word_count": 40994,
+    "char_count": 284372,
+    "id": 8
+  },
+  {
+    "fm_number": "FM 3-04",
+    "title": "ARMY",
+    "filename": "ARN43343-FM_3-04-000-WEB-1",
+    "file": "ARN43343-FM_3-04-000-WEB-1.md",
+    "word_count": 65185,
+    "char_count": 477459,
+    "id": 9
+  },
+  {
+    "fm_number": "FM 3-05",
+    "title": "ARMY SPECIAL OPERATIONS",
+    "filename": "ARN44116-FM_3-05-000-WEB-1",
+    "file": "ARN44116-FM_3-05-000-WEB-1.md",
+    "word_count": 37555,
+    "char_count": 282723,
+    "id": 10
+  },
+  {
+    "fm_number": "FM 3-07",
+    "title": "STABILITY",
+    "filename": "NOCASE-FM_3-07-000-WEB-0",
+    "file": "NOCASE-FM_3-07-000-WEB-0.md",
+    "word_count": 52175,
+    "char_count": 385334,
+    "id": 11
+  },
+  {
+    "fm_number": "FM 3-08",
+    "title": "Casualty Evacuation",
+    "filename": "ARN46662-FM_3-08-000-WEB-1",
+    "file": "ARN46662-FM_3-08-000-WEB-1.md",
+    "word_count": 75461,
+    "char_count": 567180,
+    "id": 12
+  },
+  {
+    "fm_number": "FM 3-09",
+    "title": "Fire Support and Field",
+    "filename": "ARN41659-FM_3-09-000-WEB-2",
+    "file": "ARN41659-FM_3-09-000-WEB-2.md",
+    "word_count": 126991,
+    "char_count": 866335,
+    "id": 13
+  },
+  {
+    "fm_number": "FM 3-11",
+    "title": "CHEMICAL, BIOLOGICAL,",
+    "filename": "ARN43472-FM_3-11-000-WEB-1",
+    "file": "ARN43472-FM_3-11-000-WEB-1.md",
+    "word_count": 53180,
+    "char_count": 384221,
+    "id": 14
+  },
+  {
+    "fm_number": "FM 3-12",
+    "title": "FM3-12",
+    "filename": "ARN45009-FM_3-12-000-WEB-1",
+    "file": "ARN45009-FM_3-12-000-WEB-1.md",
+    "word_count": 96522,
+    "char_count": 726476,
+    "id": 15
+  },
+  {
+    "fm_number": "FM 3-13",
+    "title": "INFORMATION",
+    "filename": "FM 3-13 FINAL WEB",
+    "file": "FM 3-13 FINAL WEB.md",
+    "word_count": 42606,
+    "char_count": 303872,
+    "id": 16
+  },
+  {
+    "fm_number": "FM 3-13.4",
+    "title": "Army Support to Military Deception",
+    "filename": "ARN15310-FM_3-13.4-000-WEB-2",
+    "file": "ARN15310-FM_3-13.4-000-WEB-2.md",
+    "word_count": 35091,
+    "char_count": 253701,
+    "id": 17
+  },
+  {
+    "fm_number": "FM 3-14",
+    "title": "Army Space",
+    "filename": "ARN46041-FM_3-14-000-WEB-1",
+    "file": "ARN46041-FM_3-14-000-WEB-1.md",
+    "word_count": 38643,
+    "char_count": 282876,
+    "id": 18
+  },
+  {
+    "fm_number": "FM 3-16",
+    "title": "THE ARMY IN MULTINATIONAL",
+    "filename": "ARN41419-FM_3-16-000-WEB-2",
+    "file": "ARN41419-FM_3-16-000-WEB-2.md",
+    "word_count": 61372,
+    "char_count": 469963,
+    "id": 19
+  },
+  {
+    "fm_number": "FM 3-22",
+    "title": "ARMY SUPPORT TO",
+    "filename": "ARN44800-FM_3-22-001-WEB-3",
+    "file": "ARN44800-FM_3-22-001-WEB-3.md",
+    "word_count": 37999,
+    "char_count": 272610,
+    "id": 20
+  },
+  {
+    "fm_number": "FM 3-24",
+    "title": "MCWP 3-33.5",
+    "filename": "ARN43742-FM_3-24-002-WEB-7",
+    "file": "ARN43742-FM_3-24-002-WEB-7.md",
+    "word_count": 104107,
+    "char_count": 734577,
+    "id": 21
+  },
+  {
+    "fm_number": "FM 3-27",
+    "title": "DISTRIBUTION RESTRICTION:",
+    "filename": "ARN38993-FM_3-27-000-WEB-1",
+    "file": "ARN38993-FM_3-27-000-WEB-1.md",
+    "word_count": 43168,
+    "char_count": 306932,
+    "id": 22
+  },
+  {
+    "fm_number": "FM 3-34",
+    "title": "ENGINEER OPERATIONS",
+    "filename": "ARN45471-FM_3-34-000-WEB-1",
+    "file": "ARN45471-FM_3-34-000-WEB-1.md",
+    "word_count": 74476,
+    "char_count": 548654,
+    "id": 23
+  },
+  {
+    "fm_number": "FM 3-39",
+    "title": "Military Police",
+    "filename": "ARN43547-FM_3-39-000-WEB-1",
+    "file": "ARN43547-FM_3-39-000-WEB-1.md",
+    "word_count": 95034,
+    "char_count": 703662,
+    "id": 24
+  },
+  {
+    "fm_number": "FM 3-50",
+    "title": "ARMY PERSONNEL",
+    "filename": "fm3_50",
+    "file": "fm3_50.md",
+    "word_count": 44679,
+    "char_count": 325988,
+    "id": 25
+  },
+  {
+    "fm_number": "FM 3-52",
+    "title": "AIRSPACE CONTROL",
+    "filename": "FM 3-52 FINAL WEB",
+    "file": "FM 3-52 FINAL WEB.md",
+    "word_count": 45753,
+    "char_count": 330992,
+    "id": 26
+  },
+  {
+    "fm_number": "FM 3-55",
+    "title": "This publication is available at Army Knowledge Online",
+    "filename": "ARN35577-FM_3-55-000-WEB-0",
+    "file": "ARN35577-FM_3-55-000-WEB-0.md",
+    "word_count": 31862,
+    "char_count": 240772,
+    "id": 27
+  },
+  {
+    "fm_number": "FM 3-57",
+    "title": "CIVIL AFFAIRS OPERATIONS",
+    "filename": "ARN33094-FM_3-57-000-WEB-1",
+    "file": "ARN33094-FM_3-57-000-WEB-1.md",
+    "word_count": 70877,
+    "char_count": 508145,
+    "id": 28
+  },
+  {
+    "fm_number": "FM 3-60",
+    "title": "Army Targeting",
+    "filename": "ARN39048-FM_3-60-000-WEB-1",
+    "file": "ARN39048-FM_3-60-000-WEB-1.md",
+    "word_count": 47859,
+    "char_count": 341955,
+    "id": 29
+  },
+  {
+    "fm_number": "FM 3-61",
+    "title": "COMMUNICATION STRATEGY",
+    "filename": "ARN44798-FM_3-61-001-WEB-3",
+    "file": "ARN44798-FM_3-61-001-WEB-3.md",
+    "word_count": 70513,
+    "char_count": 510916,
+    "id": 30
+  },
+  {
+    "fm_number": "FM 3-81",
+    "title": "Maneuver Enhancement Brigade",
+    "filename": "ARN34192-FM_3-81-000-WEB-1",
+    "file": "ARN34192-FM_3-81-000-WEB-1.md",
+    "word_count": 78078,
+    "char_count": 562735,
+    "id": 31
+  },
+  {
+    "fm_number": "FM 3-83",
+    "title": "RELIGIOUS AFFAIRS",
+    "filename": "ARN43470-FM_3-83-000-WEB-1",
+    "file": "ARN43470-FM_3-83-000-WEB-1.md",
+    "word_count": 21717,
+    "char_count": 158890,
+    "id": 32
+  },
+  {
+    "fm_number": "FM 3-84",
+    "title": "LEGAL SUPPORT TO",
+    "filename": "ARN39171-FM_3-84-000-WEB-1",
+    "file": "ARN39171-FM_3-84-000-WEB-1.md",
+    "word_count": 35819,
+    "char_count": 260112,
+    "id": 33
+  },
+  {
+    "fm_number": "FM 3-90",
+    "title": "Tactics",
+    "filename": "ARN38160-FM_3-90-000-WEB-1",
+    "file": "ARN38160-FM_3-90-000-WEB-1.md",
+    "word_count": 216945,
+    "char_count": 1502232,
+    "id": 34
+  },
+  {
+    "fm_number": "FM 3-94",
+    "title": "ARMIES, CORPS, AND",
+    "filename": "ARN34770-FM_3-94-000-WEB-1",
+    "file": "ARN34770-FM_3-94-000-WEB-1.md",
+    "word_count": 100144,
+    "char_count": 708317,
+    "id": 35
+  },
+  {
+    "fm_number": "FM 3-96",
+    "title": "Brigade Combat Team",
+    "filename": "ARN31505-FM_3-96-000-WEB-1",
+    "file": "ARN31505-FM_3-96-000-WEB-1.md",
+    "word_count": 216876,
+    "char_count": 1556154,
+    "id": 36
+  },
+  {
+    "fm_number": "FM 3-98",
+    "title": "RECONNAISSANCE AND",
+    "filename": "ARN37194-FM_3-98-000-WEB-1",
+    "file": "ARN37194-FM_3-98-000-WEB-1.md",
+    "word_count": 82873,
+    "char_count": 599775,
+    "id": 37
+  },
+  {
+    "fm_number": "FM 3-99",
+    "title": "Airborne and Air",
+    "filename": "ARN44799-FM_3-99-001-WEB-4",
+    "file": "ARN44799-FM_3-99-001-WEB-4.md",
+    "word_count": 96650,
+    "char_count": 675931,
+    "id": 38
+  },
+  {
+    "fm_number": "FM 4-0",
+    "title": "SUSTAINMENT",
+    "filename": "ARN46157-FM_4-0-000-WEB-1",
+    "file": "ARN46157-FM_4-0-000-WEB-1.md",
+    "word_count": 122635,
+    "char_count": 898049,
+    "id": 39
+  },
+  {
+    "fm_number": "FM 4-02",
+    "title": "ARMY HEALTH SYSTEM",
+    "filename": "ARN44575-FM_4-02-002-WEB-4",
+    "file": "ARN44575-FM_4-02-002-WEB-4.md",
+    "word_count": 93691,
+    "char_count": 680520,
+    "id": 40
+  },
+  {
+    "fm_number": "FM 4-1",
+    "title": "HUMAN RESOURCES",
+    "filename": "ARN44932-FM_4-1-000-WEB-1",
+    "file": "ARN44932-FM_4-1-000-WEB-1.md",
+    "word_count": 53481,
+    "char_count": 386558,
+    "id": 41
+  },
+  {
+    "fm_number": "FM 4-80",
+    "title": "FINANCIAL MANAGEMENT",
+    "filename": "ARN43537-FM_4-80-000-WEB-2",
+    "file": "ARN43537-FM_4-80-000-WEB-2.md",
+    "word_count": 70645,
+    "char_count": 518462,
+    "id": 42
+  },
+  {
+    "fm_number": "FM 5-0",
+    "title": "PLANNING AND ORDERS",
+    "filename": "ARN44590-FM_5-0-001-WEB-3",
+    "file": "ARN44590-FM_5-0-001-WEB-3.md",
+    "word_count": 169185,
+    "char_count": 1212549,
+    "id": 43
+  },
+  {
+    "fm_number": "FM 6-0",
+    "title": "DISTRIBUTION RESTRICTION:",
+    "filename": "ARN35404-FM_6-0-000-WEB-1",
+    "file": "ARN35404-FM_6-0-000-WEB-1.md",
+    "word_count": 95735,
+    "char_count": 698284,
+    "id": 44
+  },
+  {
+    "fm_number": "FM 6-02",
+    "title": "SIGNAL SUPPORT TO",
+    "filename": "ARN19185_FM 6-02_FINAL_WEB",
+    "file": "ARN19185_FM 6-02_FINAL_WEB.md",
+    "word_count": 69039,
+    "char_count": 522541,
+    "id": 45
+  },
+  {
+    "fm_number": "FM 6-22",
+    "title": "NOVEMBER",
+    "filename": "ARN43044-FM_6-22-002-WEB-5",
+    "file": "ARN43044-FM_6-22-002-WEB-5.md",
+    "word_count": 82225,
+    "char_count": 606081,
+    "id": 46
+  },
+  {
+    "fm_number": "FM 6-27",
+    "title": "MCTP 11-10C",
+    "filename": "ARN43807-FM_6-27-002-WEB-6",
+    "file": "ARN43807-FM_6-27-002-WEB-6.md",
+    "word_count": 122704,
+    "char_count": 808847,
+    "id": 47
+  },
+  {
+    "fm_number": "FM 6-99",
+    "title": "U.S. ARMY REPORT AND",
+    "filename": "ARN34470-FM_6-99-000-WEB-1",
+    "file": "ARN34470-FM_6-99-000-WEB-1.md",
+    "word_count": 56991,
+    "char_count": 502665,
+    "id": 48
+  },
+  {
+    "fm_number": "FM 7-0",
+    "title": "TRAINING",
+    "filename": "ARN35076-FM_7-0-000-WEB-1",
+    "file": "ARN35076-FM_7-0-000-WEB-1.md",
+    "word_count": 35569,
+    "char_count": 260463,
+    "id": 49
+  },
+  {
+    "fm_number": "FM 7-100",
+    "title": "OPFOR",
+    "filename": "fm7_100x1",
+    "file": "fm7_100x1.md",
+    "word_count": 146885,
+    "char_count": 1048282,
+    "id": 50
+  },
+  {
+    "fm_number": "FM 7-22",
+    "title": "HOLISTIC HEALTH AND FITNESS",
+    "filename": "ARN44522-FM_7-22-002-WEB-7",
+    "file": "ARN44522-FM_7-22-002-WEB-7.md",
+    "word_count": 97143,
+    "char_count": 676822,
+    "id": 51
+  }
+]
