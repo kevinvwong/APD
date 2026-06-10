@@ -18,7 +18,9 @@ into a Postgres table; the app then lets you search and read them.
 
 ## Features
 
-- **Browse** all active FMs, ordered by FM number.
+- **Browse** all active FMs; filter by FM series (Operations, Sustainment, …)
+  with live per-series counts, and sort by number, title, or length. Listings
+  show publication year and chapter count.
 - **Search** by FM number, title, filename, *or full text* — backed by Postgres
   full-text search (weighted `tsvector` + GIN index) with relevance ranking,
   phrase (`"..."`), `OR`, and `-negation` support, and highlighted excerpts.

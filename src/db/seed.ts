@@ -8,6 +8,7 @@ import { fieldManuals } from "./schema";
 import { sql } from "drizzle-orm";
 import { parseFmNumber, parseTitleFromContent } from "../lib/fm";
 import { extractToc } from "../lib/toc";
+import { deriveSeries, parsePublicationDate, countChapters } from "../lib/series";
 
 const db = drizzle(neon(process.env.DATABASE_URL!), {});
 
@@ -37,6 +38,9 @@ async function main() {
       word_count,
       char_count,
       toc,
+      fm_series: deriveSeries(fm_number),
+      publication_date: parsePublicationDate(content),
+      chapter_count: countChapters(content),
     });
 
     console.log(`  [${++inserted}/${files.length}] ${fm_number} — ${title.slice(0, 60)}`);

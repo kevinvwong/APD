@@ -1,8 +1,11 @@
 import { db } from "@/db";
 import { fieldManuals } from "@/db/schema";
-import { desc } from "drizzle-orm";
+import { and, desc, eq, sql, type SQL } from "drizzle-orm";
+import { type PgColumn } from "drizzle-orm/pg-core";
 import Link from "next/link";
 import { ftsWhere, ftsRank, ftsHeadline, headlineToHtml } from "@/lib/search";
+import SeriesFilter, { type SeriesCount } from "@/components/SeriesFilter";
+import { seriesLabel } from "@/lib/series";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +15,8 @@ const baseColumns = {
   title: fieldManuals.title,
   filename: fieldManuals.filename,
   word_count: fieldManuals.word_count,
+  publication_date: fieldManuals.publication_date,
+  chapter_count: fieldManuals.chapter_count,
 };
 
 type Row = {
@@ -20,19 +25,33 @@ type Row = {
   title: string;
   filename: string;
   word_count: number;
+  publication_date: string | null;
+  chapter_count: number;
   excerptHtml: string | null;
 };
 
-async function runSearch(query: string | undefined): Promise<Row[]> {
+function sortOrder(sort: string): SQL | PgColumn {
+  if (sort === "title") return fieldManuals.title;
+  if (sort === "words") return desc(fieldManuals.word_count);
+  return fieldManuals.fm_number;
+}
+
+async function runSearch(
+  query: string | undefined,
+  series: string | undefined,
+  sort: string
+): Promise<Row[]> {
+  const where = and(
+    query ? ftsWhere(query) : undefined,
+    series ? eq(fieldManuals.fm_series, series) : undefined
+  );
+
   if (query) {
-    // Full-text search: rank by relevance (weighted title/number > body), with
-    // a highlighted ts_headline excerpt.
     const rows = await db
       .select({ ...baseColumns, excerpt: ftsHeadline(query) })
       .from(fieldManuals)
-      .where(ftsWhere(query))
+      .where(where)
       .orderBy(desc(ftsRank(query)), fieldManuals.fm_number);
-
     return rows.map(({ excerpt, ...r }) => {
       const { html, hasMatch } = headlineToHtml(excerpt ?? "");
       return { ...r, excerptHtml: hasMatch ? html : null };
@@ -42,18 +61,44 @@ async function runSearch(query: string | undefined): Promise<Row[]> {
   const rows = await db
     .select(baseColumns)
     .from(fieldManuals)
-    .orderBy(fieldManuals.fm_number);
+    .where(where)
+    .orderBy(sortOrder(sort));
   return rows.map((r) => ({ ...r, excerptHtml: null }));
+}
+
+async function seriesCounts(query: string | undefined): Promise<{
+  counts: SeriesCount[];
+  total: number;
+}> {
+  // Counts reflect the active text query but ignore the series selection, so
+  // the chips always show how many results each series has for this search.
+  const rows = await db
+    .select({ series: fieldManuals.fm_series, count: sql<number>`count(*)::int` })
+    .from(fieldManuals)
+    .where(query ? ftsWhere(query) : undefined)
+    .groupBy(fieldManuals.fm_series);
+
+  const counts = rows
+    .map((r) => ({ series: r.series, label: seriesLabel(r.series), count: Number(r.count) }))
+    .sort((a, b) => Number(a.series) - Number(b.series));
+  const total = counts.reduce((sum, c) => sum + c.count, 0);
+  return { counts, total };
 }
 
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; series?: string; sort?: string }>;
 }) {
-  const { q } = await searchParams;
-  const query = q?.trim() || undefined;
-  const fms = await runSearch(query);
+  const sp = await searchParams;
+  const query = sp.q?.trim() || undefined;
+  const series = sp.series?.trim() || undefined;
+  const sort = sp.sort?.trim() || "number";
+
+  const [fms, { counts, total }] = await Promise.all([
+    runSearch(query, series, sort),
+    seriesCounts(query),
+  ]);
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-12">
@@ -62,14 +107,15 @@ export default async function Home({
         {query ? (
           <>
             {fms.length} {fms.length === 1 ? "result" : "results"} for{" "}
-            <span className="font-medium text-gray-700">“{query}”</span> —{" "}
+            <span className="font-medium text-gray-700">“{query}”</span>
+            {series && <> in {seriesLabel(series)}</>} —{" "}
             <Link href="/" className="underline">
               clear
             </Link>
           </>
         ) : (
           <>
-            {fms.length} active FMs — sourced from{" "}
+            {total} active FMs — sourced from{" "}
             <a
               href="https://armypubs.army.mil"
               className="underline"
@@ -82,7 +128,8 @@ export default async function Home({
         )}
       </p>
 
-      <form className="mb-8 flex gap-2">
+      <form className="mb-6 flex gap-2">
+        {series && <input type="hidden" name="series" value={series} />}
         <input
           name="q"
           defaultValue={query}
@@ -96,6 +143,8 @@ export default async function Home({
           Search
         </button>
       </form>
+
+      <SeriesFilter counts={counts} total={total} />
 
       {fms.length === 0 ? (
         <p className="text-sm text-gray-500">
@@ -117,7 +166,12 @@ export default async function Home({
                 <p className="mt-0.5 font-medium group-hover:underline">
                   {fm.title}
                 </p>
-                <p className="text-xs text-gray-400 mt-0.5">{fm.filename}</p>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  {fm.filename}
+                  {fm.publication_date && ` · ${fm.publication_date.slice(0, 4)}`}
+                  {fm.chapter_count > 0 &&
+                    ` · ${fm.chapter_count} ${fm.chapter_count === 1 ? "chapter" : "chapters"}`}
+                </p>
                 {fm.excerptHtml && (
                   <p
                     className="mt-1.5 text-xs text-gray-500 italic [&_mark]:bg-yellow-200 [&_mark]:text-gray-900 [&_mark]:not-italic [&_mark]:rounded-sm [&_mark]:px-0.5"
