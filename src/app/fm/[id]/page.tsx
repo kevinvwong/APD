@@ -3,6 +3,13 @@ import { fieldManuals } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeSlug from "rehype-slug";
+import rehypeAutolinkHeadings from "rehype-autolink-headings";
+import Toc from "@/components/Toc";
+
+export const dynamic = "force-dynamic";
 
 export default async function FmPage({
   params,
@@ -10,15 +17,19 @@ export default async function FmPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+
+  const numericId = Number(id);
+  if (!Number.isInteger(numericId)) notFound();
+
   const [fm] = await db
     .select()
     .from(fieldManuals)
-    .where(eq(fieldManuals.id, Number(id)));
+    .where(eq(fieldManuals.id, numericId));
 
   if (!fm) notFound();
 
   return (
-    <main className="max-w-4xl mx-auto px-4 py-12">
+    <main className="max-w-6xl mx-auto px-4 py-12">
       <Link href="/" className="text-sm text-gray-500 hover:underline mb-6 block">
         &larr; All Field Manuals
       </Link>
@@ -30,9 +41,20 @@ export default async function FmPage({
           {fm.char_count.toLocaleString()} chars
         </p>
       </div>
-      <article className="prose prose-sm max-w-none whitespace-pre-wrap font-mono text-xs leading-relaxed bg-white border border-gray-200 rounded p-6 overflow-auto">
-        {fm.content}
-      </article>
+      <div className="lg:grid lg:grid-cols-[1fr_16rem] lg:gap-8 lg:items-start">
+        <article className="prose prose-sm max-w-none bg-white border border-gray-200 rounded p-6 overflow-auto prose-headings:scroll-mt-6 prose-table:text-xs prose-pre:bg-gray-50 prose-pre:text-gray-800 prose-a:[&_.anchor]:no-underline">
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            rehypePlugins={[
+              rehypeSlug,
+              [rehypeAutolinkHeadings, { behavior: "wrap" }],
+            ]}
+          >
+            {fm.content}
+          </ReactMarkdown>
+        </article>
+        <Toc entries={fm.toc} />
+      </div>
     </main>
   );
 }

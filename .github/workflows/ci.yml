@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm run test
+
+      - name: Build
+        run: npm run build
+        # NOTE: The current pages are `force-dynamic`, so `next build` does not
+        # touch the database. Once the reading page moves to static generation
+        # (generateStaticParams + ISR), the build will query Postgres during
+        # page-data collection — set a `DATABASE_URL` secret here at that point:
+        #   env:
+        #     DATABASE_URL: ${{ secrets.DATABASE_URL }}
