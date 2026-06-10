@@ -5,28 +5,43 @@ import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
+const EXCERPT_RADIUS = 90;
+
+// Pull a short snippet of context around the first match of `q` in `content`.
+function buildExcerpt(content: string, q: string): string | null {
+  const idx = content.toLowerCase().indexOf(q.toLowerCase());
+  if (idx === -1) return null;
+  const start = Math.max(0, idx - EXCERPT_RADIUS);
+  const end = Math.min(content.length, idx + q.length + EXCERPT_RADIUS);
+  const snippet = content.slice(start, end).replace(/\s+/g, " ").trim();
+  return `${start > 0 ? "… " : ""}${snippet}${end < content.length ? " …" : ""}`;
+}
+
 export default async function Home({
   searchParams,
 }: {
   searchParams: Promise<{ q?: string }>;
 }) {
   const { q } = await searchParams;
+  const query = q?.trim();
 
   const fms = await db
     .select({
-      id:         fieldManuals.id,
-      fm_number:  fieldManuals.fm_number,
-      title:      fieldManuals.title,
-      filename:   fieldManuals.filename,
+      id: fieldManuals.id,
+      fm_number: fieldManuals.fm_number,
+      title: fieldManuals.title,
+      filename: fieldManuals.filename,
       word_count: fieldManuals.word_count,
+      content: fieldManuals.content,
     })
     .from(fieldManuals)
     .where(
-      q
+      query
         ? or(
-            ilike(fieldManuals.fm_number, `%${q}%`),
-            ilike(fieldManuals.title, `%${q}%`),
-            ilike(fieldManuals.filename, `%${q}%`)
+            ilike(fieldManuals.fm_number, `%${query}%`),
+            ilike(fieldManuals.title, `%${query}%`),
+            ilike(fieldManuals.filename, `%${query}%`),
+            ilike(fieldManuals.content, `%${query}%`)
           )
         : undefined
     )
@@ -36,44 +51,87 @@ export default async function Home({
     <main className="max-w-4xl mx-auto px-4 py-12">
       <h1 className="text-3xl font-bold mb-2">Army Field Manuals</h1>
       <p className="text-gray-500 mb-8">
-        {fms.length} active FMs — sourced from{" "}
-        <a
-          href="https://armypubs.army.mil"
-          className="underline"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          armypubs.army.mil
-        </a>
+        {query ? (
+          <>
+            {fms.length} {fms.length === 1 ? "result" : "results"} for{" "}
+            <span className="font-medium text-gray-700">“{query}”</span> —{" "}
+            <Link href="/" className="underline">
+              clear
+            </Link>
+          </>
+        ) : (
+          <>
+            {fms.length} active FMs — sourced from{" "}
+            <a
+              href="https://armypubs.army.mil"
+              className="underline"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              armypubs.army.mil
+            </a>
+          </>
+        )}
       </p>
 
-      <form className="mb-8">
+      <form className="mb-8 flex gap-2">
         <input
           name="q"
-          defaultValue={q}
-          placeholder="Search by FM number or title..."
+          defaultValue={query}
+          placeholder="Search by FM number, title, or full text…"
           className="w-full border border-gray-300 rounded px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
         />
+        <button
+          type="submit"
+          className="rounded bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
+        >
+          Search
+        </button>
       </form>
 
-      <ul className="divide-y divide-gray-200">
-        {fms.map((fm) => (
-          <li key={fm.id} className="py-4">
-            <Link href={`/fm/${fm.id}`} className="group">
-              <div className="flex items-baseline justify-between">
-                <span className="font-mono text-sm font-semibold text-gray-400 group-hover:text-black">
-                  {fm.fm_number}
-                </span>
-                <span className="text-xs text-gray-400">
-                  {fm.word_count.toLocaleString()} words
-                </span>
-              </div>
-              <p className="mt-0.5 font-medium group-hover:underline">{fm.title}</p>
-              <p className="text-xs text-gray-400 mt-0.5">{fm.filename}</p>
-            </Link>
-          </li>
-        ))}
-      </ul>
+      {fms.length === 0 ? (
+        <p className="text-sm text-gray-500">
+          No field manuals matched your search.
+        </p>
+      ) : (
+        <ul className="divide-y divide-gray-200">
+          {fms.map((fm) => {
+            // Only surface a body excerpt when the match isn't already obvious
+            // from the number/title/filename.
+            const inMeta =
+              !!query &&
+              [fm.fm_number, fm.title, fm.filename].some((f) =>
+                f.toLowerCase().includes(query.toLowerCase())
+              );
+            const excerpt =
+              query && !inMeta ? buildExcerpt(fm.content, query) : null;
+
+            return (
+              <li key={fm.id} className="py-4">
+                <Link href={`/fm/${fm.id}`} className="group">
+                  <div className="flex items-baseline justify-between">
+                    <span className="font-mono text-sm font-semibold text-gray-400 group-hover:text-black">
+                      {fm.fm_number}
+                    </span>
+                    <span className="text-xs text-gray-400">
+                      {fm.word_count.toLocaleString()} words
+                    </span>
+                  </div>
+                  <p className="mt-0.5 font-medium group-hover:underline">
+                    {fm.title}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-0.5">{fm.filename}</p>
+                  {excerpt && (
+                    <p className="mt-1.5 text-xs text-gray-500 italic">
+                      {excerpt}
+                    </p>
+                  )}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </main>
   );
 }
