@@ -354,7 +354,7 @@ export function parseFM(
       const lvl = isChapter ? 1 : level;
       const id = "h" + ++hid;
       blocks.push({ type: "h", level: lvl, text, id, chap: isChapLabel });
-      if (lvl <= 2) toc.push({ id, level: lvl, text, chap: isChapLabel });
+      if (lvl <= 3) toc.push({ id, level: lvl, text, chap: isChapLabel });
       continue;
     }
 

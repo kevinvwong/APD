@@ -516,6 +516,11 @@ body > div {
   font-size: 14px;
   padding-left: 22px;
 }
+.toc-item.lvl3 {
+  font-size: 13px;
+  padding-left: 36px;
+  color: var(--mute);
+}
 .toc-item.on {
   border-left-color: var(--olive);
   color: var(--olive);
