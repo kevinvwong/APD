@@ -132,9 +132,14 @@ function isLeaderLine(line: string): boolean {
   // Check raw line
   if (/\.{4,}\s*\d*\s*$/.test(line) || /\.{6,}\s*\d*\s*$/.test(line))
     return true;
-  // Also check with bold markers stripped — catches "**Section I ..... 1-1**"
-  const stripped = line.replace(/\*\*/g, "").trim();
-  return /\.{4,}\s*[\d\-]*\s*$/.test(stripped);
+  // Strip bold markers and heading markers, then check for dot-leader patterns.
+  // Catches "**Section I ..... 1-1**" and "### Figure 1. chart ........ viii"
+  const stripped = line
+    .replace(/\*\*/g, "")
+    .replace(/^#+\s*/, "")
+    .trim();
+  // Ends with digits, roman numerals, or chapter-page refs after dot leaders
+  return /\.{4,}\s*([ivxlcdm]{1,6}|\d[\d\-]*)?\s*$/.test(stripped);
 }
 
 function figCaption(t: string) {
@@ -372,26 +377,36 @@ export function parseFM(
       continue;
     }
 
-    // Standalone bullet marker on its own line (PDF extraction artifact):
-    // "•\n" followed by the text on the next line.
-    if (/^[•‣◦]$/.test(t)) {
+    // Standalone bullet marker on its own line (PDF extraction artifact).
+    // Handles both:
+    //   "•\n<text>" — single continuation line
+    //   "•\n<text line 1>\n<text line 2>" — multi-line continuation
+    // Also handles "z" used as a Wingdings/Symbol bullet glyph in some FMs.
+    if (/^[•‣◦z]$/.test(t)) {
       flushPara();
-      // Peek forward for the text content
-      let textLine = "";
+      const textParts: string[] = [];
       let j = i + 1;
-      while (j < lines.length && !lines[j].trim()) j++; // skip blanks
-      if (j < lines.length && j < sigBlockStart) {
+      while (j < lines.length && j < sigBlockStart) {
         const next = lines[j].trim();
+        if (!next) {
+          j++;
+          break;
+        } // blank line ends the bullet
+        // Stop if next line is another bullet, heading, or furniture
         if (
-          next &&
-          !next.startsWith("#") &&
-          !isBullet(next) &&
-          !/^[•‣◦]$/.test(next)
-        ) {
-          textLine = next;
-          i = j; // advance past the consumed line
-        }
+          next.startsWith("#") ||
+          isBullet(next) ||
+          /^[•‣◦z]$/.test(next) ||
+          isFurniture(lines[j])
+        )
+          break;
+        textParts.push(next);
+        j++;
+        // Stop after collecting a sentence-ending line (avoids swallowing next paragraph)
+        if (/[.!?]$/.test(next)) break;
       }
+      i = j - 1; // advance past consumed lines
+      const textLine = textParts.join(" ").trim();
       if (textLine) {
         blocks.push({ type: "li", html: inline(textLine) });
       }
