@@ -1,7 +1,8 @@
 import { db } from "@/db";
-import { fieldManuals } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { fieldManuals, userHighlights } from "@/db/schema";
+import { eq, and, desc } from "drizzle-orm";
 import { notFound } from "next/navigation";
+import { auth } from "@clerk/nextjs/server";
 import { parseFM } from "@/lib/fm-parse";
 import { getFigureUrls } from "@/lib/figures";
 import { ReaderClient } from "@/components/ReaderClient";
@@ -47,5 +48,33 @@ export default async function FmPage({
     word_count: fm.word_count,
   };
 
-  return <ReaderClient fm={fmMeta} doc={doc} fmIndex={fmIndex} />;
+  // Pull this user's saved highlights for this FM (if signed in)
+  const { userId } = await auth();
+  const highlights = userId
+    ? await db
+        .select({
+          id: userHighlights.id,
+          anchor: userHighlights.anchor,
+          selected_text: userHighlights.selected_text,
+          color: userHighlights.color,
+          note: userHighlights.note,
+        })
+        .from(userHighlights)
+        .where(
+          and(
+            eq(userHighlights.user_id, userId),
+            eq(userHighlights.fm_id, fm.id),
+          ),
+        )
+        .orderBy(desc(userHighlights.created_at))
+    : [];
+
+  return (
+    <ReaderClient
+      fm={fmMeta}
+      doc={doc}
+      fmIndex={fmIndex}
+      initialHighlights={highlights}
+    />
+  );
 }

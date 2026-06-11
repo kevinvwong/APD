@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
-import { useAuth, SignInButton, UserButton } from "@clerk/nextjs";
+import { useAuth, SignInButton, UserButton, useUser } from "@clerk/nextjs";
 import { SeriesRail, SERIES_MAP, type Scope } from "./SeriesRail";
 
 // ---- Types ----
@@ -102,6 +102,54 @@ export function CatalogClient({ fms }: CatalogClientProps) {
     [],
   );
   const [recents] = useLocalStorage<number[]>("apd_recents", []);
+
+  // One-shot localStorage → DB migration on first sign-in per user.
+  // Tracks per-user-id in localStorage so we don't repeat across page loads.
+  const { isSignedIn, user } = useUser();
+  useEffect(() => {
+    if (!isSignedIn || !user?.id) return;
+    const key = `apd_migrated_${user.id}`;
+    if (localStorage.getItem(key) === "1") return;
+
+    const bms = (() => {
+      try {
+        const v = JSON.parse(localStorage.getItem("apd_bookmarks") || "[]");
+        return Array.isArray(v) ? v.filter((n) => Number.isInteger(n)) : [];
+      } catch {
+        return [];
+      }
+    })();
+    const rcs = (() => {
+      try {
+        const v = JSON.parse(localStorage.getItem("apd_recents") || "[]");
+        return Array.isArray(v) ? v.filter((n) => Number.isInteger(n)) : [];
+      } catch {
+        return [];
+      }
+    })();
+
+    (async () => {
+      try {
+        if (bms.length) {
+          await fetch("/api/library/bookmarks", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ids: bms }),
+          });
+        }
+        if (rcs.length) {
+          await fetch("/api/library/recents", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ids: rcs }),
+          });
+        }
+        localStorage.setItem(key, "1");
+      } catch {
+        // Quiet failure — try again next page load
+      }
+    })();
+  }, [isSignedIn, user?.id]);
 
   // Enrich FMs with derived data
   const enriched = useMemo(
