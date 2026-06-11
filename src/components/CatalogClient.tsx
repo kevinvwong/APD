@@ -212,7 +212,9 @@ export function CatalogClient({ fms }: CatalogClientProps) {
     <div className="app">
       {/* ---- Masthead ---- */}
       <div className="masthead">
-        <div className="seal">APD</div>
+        <Link href="/" className="seal" style={{ textDecoration: "none" }}>
+          APD
+        </Link>
         <div style={{ flex: 1 }}>
           <div className="mast-kicker">Army Publishing Directorate</div>
           <div className="mast-title">Field Manual Library</div>

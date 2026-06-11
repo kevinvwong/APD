@@ -86,7 +86,7 @@ export function ReaderClient({ fm, doc, fmIndex }: Props) {
 
     // Mark cross-references that match a known FM number
     root.querySelectorAll<HTMLElement>(".xref").forEach((el) => {
-      const t = el.textContent?.replace(/ /g, " ").trim() ?? "";
+      const t = el.textContent?.replace(/ /g, " ").trim() ?? "";
       if (fmIndex[t] !== undefined && t !== fm.fm_number) {
         el.classList.add("xref-live");
         el.dataset.num = t;

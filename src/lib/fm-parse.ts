@@ -129,7 +129,12 @@ function isRunHeader(t: string): boolean {
 }
 
 function isLeaderLine(line: string): boolean {
-  return /\.{4,}\s*\d*\s*$/.test(line) || /\.{6,}\s*\d*\s*$/.test(line);
+  // Check raw line
+  if (/\.{4,}\s*\d*\s*$/.test(line) || /\.{6,}\s*\d*\s*$/.test(line))
+    return true;
+  // Also check with bold markers stripped — catches "**Section I ..... 1-1**"
+  const stripped = line.replace(/\*\*/g, "").trim();
+  return /\.{4,}\s*[\d\-]*\s*$/.test(stripped);
 }
 
 function figCaption(t: string) {
