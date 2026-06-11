@@ -88,14 +88,19 @@ export function ReaderClient({ fm, doc, fmIndex }: Props) {
     // inline() renders xrefs with &nbsp; (U+00A0); normalize to space and
     // strip trailing sentence punctuation before fmIndex lookup
     // ("FM 1-02.1." -> "FM 1-02.1").
-    root.querySelectorAll<HTMLElement>(".xref").forEach((el) => {
-      const raw = (el.textContent ?? "").replace(/ /g, " ").trim();
-      const t = raw.replace(/[.,;:)\]]+$/, "");
-      if (fmIndex[t] !== undefined && t !== fm.fm_number) {
-        el.classList.add("xref-live");
-        el.dataset.num = t;
-      }
-    });
+    const wireXrefs = () => {
+      root.querySelectorAll<HTMLElement>(".xref").forEach((el) => {
+        if (el.classList.contains("xref-live")) return;
+        const raw = (el.textContent ?? "").replace(/ /g, " ").trim();
+        const t = raw.replace(/[.,;:)\]]+$/, "");
+        if (fmIndex[t] !== undefined && t !== fm.fm_number) {
+          el.classList.add("xref-live");
+          el.dataset.num = t;
+        }
+      });
+    };
+    wireXrefs();
+    requestAnimationFrame(() => wireXrefs());
 
     if (!goAnchor() && els.length) {
       setActiveId(els[0].dataset.hid ?? null);
