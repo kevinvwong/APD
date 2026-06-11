@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
+import { useAuth, SignInButton, UserButton } from "@clerk/nextjs";
 import { SeriesRail, SERIES_MAP, type Scope } from "./SeriesRail";
 
 // ---- Types ----
@@ -224,6 +225,16 @@ export function CatalogClient({ fms }: CatalogClientProps) {
           <br />
           <span style={{ color: "var(--olive)" }}>Current as of June 2026</span>
         </div>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            marginLeft: 16,
+          }}
+        >
+          <AuthSlot />
+        </div>
       </div>
 
       {/* ---- Controls ---- */}
@@ -375,5 +386,31 @@ export function CatalogClient({ fms }: CatalogClientProps) {
         </div>
       </div>
     </div>
+  );
+}
+
+function AuthSlot() {
+  const { isLoaded, isSignedIn } = useAuth();
+  if (!isLoaded) return null;
+  if (!isSignedIn) {
+    return (
+      <SignInButton mode="modal">
+        <button className="chip" style={{ background: "transparent" }}>
+          Sign in
+        </button>
+      </SignInButton>
+    );
+  }
+  return (
+    <>
+      <Link
+        href="/library"
+        className="chip"
+        style={{ background: "transparent", textDecoration: "none" }}
+      >
+        ★ Your Library
+      </Link>
+      <UserButton />
+    </>
   );
 }

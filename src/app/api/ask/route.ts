@@ -9,6 +9,10 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { auth } from "@clerk/nextjs/server";
+import { eq, and } from "drizzle-orm";
+import { db } from "@/db";
+import { conversations, messages } from "@/db/schema";
 import { retrieve, type Section } from "@/lib/retrieve";
 import { retrieve as retrievePg } from "@/lib/retrieve-pg";
 import { buildPrompt, type AskMode, type ChatTurn } from "@/lib/ask-prompt";
@@ -114,7 +118,16 @@ export async function POST(req: NextRequest) {
 
     const sources = await getSources(question, 12, fmId);
 
+    // Optional resume: { conversationId } from the client lets logged-in users
+    // continue a thread. Verified for ownership below.
+    const rawConvoId = Number(body.conversationId);
+    const requestedConvoId =
+      Number.isInteger(rawConvoId) && rawConvoId > 0 ? rawConvoId : null;
+
+    const { userId } = await auth();
+
     if (!sources.length && mode === "library") {
+      // Don't persist the "no results" fallback — it'd clutter conversation history
       return NextResponse.json({
         answer:
           'I couldn\'t find anything relevant in the indexed manuals for that. Try rephrasing with doctrinal terms, or switch to "Model + Library".',
@@ -133,17 +146,80 @@ export async function POST(req: NextRequest) {
       .map((b) => b.text)
       .join("");
 
-    // Return only the fields the client needs to render + deep-link.
+    const sourceObjs = sources.map((s) => ({
+      f: s.f,
+      n: s.n,
+      ft: s.ft,
+      a: s.a,
+      h: s.h,
+      c: s.c,
+    }));
+
+    // Persist to user's library if signed in
+    let conversationId: number | null = null;
+    let messageId: number | null = null;
+    if (userId) {
+      try {
+        // Verify or create conversation
+        let convo: { id: number } | undefined;
+        if (requestedConvoId) {
+          const [row] = await db
+            .select({ id: conversations.id })
+            .from(conversations)
+            .where(
+              and(
+                eq(conversations.id, requestedConvoId),
+                eq(conversations.user_id, userId),
+              ),
+            );
+          convo = row;
+        }
+        if (!convo) {
+          const [row] = await db
+            .insert(conversations)
+            .values({
+              user_id: userId,
+              fm_id: fmId,
+              title: question.slice(0, 120),
+              mode,
+            })
+            .returning({ id: conversations.id });
+          convo = row;
+        } else {
+          await db
+            .update(conversations)
+            .set({ updated_at: new Date() })
+            .where(eq(conversations.id, convo.id));
+        }
+        conversationId = convo.id;
+
+        // Save the Q + A
+        await db.insert(messages).values({
+          conversation_id: convo.id,
+          role: "user",
+          text: question,
+        });
+        const [aMsg] = await db
+          .insert(messages)
+          .values({
+            conversation_id: convo.id,
+            role: "assistant",
+            text: answer,
+            sources: sourceObjs,
+          })
+          .returning({ id: messages.id });
+        messageId = aMsg.id;
+      } catch (e) {
+        // Persistence failures should not break the user-facing answer
+        console.error("[/api/ask] persist failed:", e);
+      }
+    }
+
     return NextResponse.json({
       answer,
-      sources: sources.map((s) => ({
-        f: s.f,
-        n: s.n,
-        ft: s.ft,
-        a: s.a,
-        h: s.h,
-        c: s.c,
-      })),
+      sources: sourceObjs,
+      conversationId,
+      messageId,
     });
   } catch (e: any) {
     // Log full detail server-side only; never leak SDK/internal messages to the

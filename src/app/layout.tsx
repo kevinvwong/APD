@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Oswald, Source_Serif_4 } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 import "./doctrine.css";
 
@@ -30,8 +31,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${oswald.variable} ${sourceSerif.variable}`}>
-      <body>{children}</body>
-    </html>
+    <ClerkProvider
+      appearance={{
+        variables: {
+          colorPrimary: "#4a5524", // matches --olive
+          fontFamily: "var(--font-source-serif), Georgia, serif",
+        },
+      }}
+    >
+      <html lang="en" className={`${oswald.variable} ${sourceSerif.variable}`}>
+        <body>{children}</body>
+      </html>
+    </ClerkProvider>
   );
 }

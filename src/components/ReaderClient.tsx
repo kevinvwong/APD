@@ -50,6 +50,12 @@ export function ReaderClient({ fm, doc, fmIndex }: Props) {
     } catch {
       // ignore
     }
+    // Also sync to server if signed in (fire-and-forget; 401 is fine for anon)
+    fetch("/api/library/recents", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ fm_id: fm.id }),
+    }).catch(() => {});
   }, [fm.id]);
 
   // Build heading offset table, wire xrefs, handle anchor deep-link
@@ -145,6 +151,18 @@ export function ReaderClient({ fm, doc, fmIndex }: Props) {
         localStorage.setItem("apd_bookmarks", JSON.stringify(updated));
       } catch {
         // ignore
+      }
+      // Sync to server (no-op for anon users; 401 is fine)
+      if (next) {
+        fetch("/api/library/bookmarks", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ fm_id: fm.id }),
+        }).catch(() => {});
+      } else {
+        fetch(`/api/library/bookmarks?fm_id=${fm.id}`, {
+          method: "DELETE",
+        }).catch(() => {});
       }
       return next;
     });

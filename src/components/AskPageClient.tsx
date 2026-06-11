@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   askLibrary,
+  setMessageStar,
   type AskResult,
   type AskMode,
   type AskSource,
@@ -110,6 +111,9 @@ interface Message {
   text: string;
   sources?: AskSource[];
   mode?: AskMode;
+  /** Persisted message id when signed in — enables the star button */
+  messageId?: number | null;
+  starred?: boolean;
 }
 
 // inline: **bold** + [n] citation badges
@@ -233,6 +237,15 @@ function Answer({
 
 export function AskPageClient({ fmId, fm }: Props) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialConversationId = (() => {
+    const v = searchParams.get("conversation");
+    const n = v ? Number(v) : NaN;
+    return Number.isInteger(n) && n > 0 ? n : null;
+  })();
+  const [conversationId, setConversationId] = useState<number | null>(
+    initialConversationId,
+  );
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -254,6 +267,43 @@ export function AskPageClient({ fmId, fm }: Props) {
       localStorage.setItem("apd_ask_mode", mode);
     } catch {}
   }, [mode]);
+
+  // Load conversation history when arriving with ?conversation=N
+  useEffect(() => {
+    if (!initialConversationId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(
+          `/api/library/conversations/${initialConversationId}`,
+        );
+        if (!res.ok) return;
+        const data = await res.json();
+        if (cancelled || !data.messages) return;
+        const loaded: Message[] = data.messages.map(
+          (m: {
+            id: number;
+            role: "user" | "assistant";
+            text: string;
+            sources: unknown;
+            starred: boolean;
+          }) => ({
+            role: m.role,
+            text: m.text,
+            sources: (m.sources ?? undefined) as AskSource[] | undefined,
+            messageId: m.id,
+            starred: !!m.starred,
+          }),
+        );
+        setMessages(loaded);
+      } catch {
+        // ignore load failures
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [initialConversationId]);
 
   // Scroll so the latest .q-block is at top of thread (16px offset)
   useEffect(() => {
@@ -307,9 +357,20 @@ export function AskPageClient({ fmId, fm }: Props) {
         mode,
         fmId,
         history,
+        conversationId,
         signal: ctrl.signal,
       });
       setPhase(mode === "open" ? "Reasoning…" : "Consulting doctrine…");
+      // First response on a new thread → store the returned conversationId
+      if (result.conversationId && !conversationId) {
+        setConversationId(result.conversationId);
+        // Reflect in URL so refresh / share-link works without re-creating
+        if (typeof window !== "undefined") {
+          const url = new URL(window.location.href);
+          url.searchParams.set("conversation", String(result.conversationId));
+          window.history.replaceState({}, "", url.toString());
+        }
+      }
       setMessages((prev) => [
         ...prev,
         {
@@ -317,6 +378,8 @@ export function AskPageClient({ fmId, fm }: Props) {
           text: result.answer,
           sources: result.sources,
           mode,
+          messageId: result.messageId ?? null,
+          starred: false,
         },
       ]);
     } catch (err: unknown) {
@@ -412,6 +475,47 @@ export function AskPageClient({ fmId, fm }: Props) {
                   sources={m.sources || []}
                   onCiteClick={onCiteClick}
                 />
+                {m.messageId != null && (
+                  <button
+                    className="star-btn"
+                    onClick={async () => {
+                      const next = !m.starred;
+                      // Optimistic
+                      setMessages((prev) =>
+                        prev.map((x, ix) =>
+                          ix === i ? { ...x, starred: next } : x,
+                        ),
+                      );
+                      try {
+                        await setMessageStar(m.messageId!, next);
+                      } catch {
+                        // Revert on failure
+                        setMessages((prev) =>
+                          prev.map((x, ix) =>
+                            ix === i ? { ...x, starred: !next } : x,
+                          ),
+                        );
+                      }
+                    }}
+                    title={
+                      m.starred ? "Unstar this answer" : "Star this answer"
+                    }
+                    style={{
+                      background: "transparent",
+                      border: 0,
+                      cursor: "pointer",
+                      fontFamily: "var(--head)",
+                      fontSize: 12,
+                      letterSpacing: "0.06em",
+                      textTransform: "uppercase",
+                      color: m.starred ? "var(--gold)" : "var(--mute)",
+                      padding: "6px 0",
+                      marginTop: 4,
+                    }}
+                  >
+                    {m.starred ? "★ Starred" : "☆ Star this answer"}
+                  </button>
+                )}
                 {m.sources && m.sources.length > 0 && (
                   <div className="sources">
                     <div className="sources-h">
