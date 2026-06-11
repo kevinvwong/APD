@@ -317,9 +317,27 @@ function Body({ blocks }: { blocks: Block[] }) {
             {b.kind === "table" ? "▦" : "◐"} {b.label}
           </span>
           {b.text && <span className="a-fig-cap">{b.text}</span>}
-          <span className="a-fig-note">
-            {b.kind === "table" ? "Table" : "Figure"} reproduced in source PDF
-          </span>
+          {b.url ? (
+            <a
+              href={b.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="a-fig-img"
+              aria-label={`Open ${b.label} full size`}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={b.url}
+                alt={b.text || b.label}
+                loading="lazy"
+                decoding="async"
+              />
+            </a>
+          ) : (
+            <span className="a-fig-note">
+              {b.kind === "table" ? "Table" : "Figure"} reproduced in source PDF
+            </span>
+          )}
         </div>,
       );
       continue;

@@ -12,7 +12,9 @@
     "db:push": "drizzle-kit push",
     "db:seed": "npx tsx src/db/seed.ts",
     "search:index": "tsx scripts/build-search-index.ts",
-    "index:db": "tsx scripts/index-sections-to-db.ts"
+    "index:db": "tsx scripts/index-sections-to-db.ts",
+    "figures:extract": "python scripts/extract-figures.py",
+    "figures:upload": "tsx scripts/upload-figures.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.104.1",
@@ -21,6 +23,7 @@
     "@types/node": "^25.9.2",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
+    "@vercel/blob": "^2.4.0",
     "dotenv": "^17.4.2",
     "drizzle-kit": "^0.31.10",
     "drizzle-orm": "^0.45.2",

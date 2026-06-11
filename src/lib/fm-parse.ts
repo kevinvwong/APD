@@ -6,7 +6,13 @@ export type Block =
   | { type: "h"; level: number; text: string; id: string; chap?: boolean }
   | { type: "p"; html: string }
   | { type: "li"; html: string }
-  | { type: "fig"; kind: "table" | "figure"; label: string; text: string }
+  | {
+      type: "fig";
+      kind: "table" | "figure";
+      label: string;
+      text: string;
+      url?: string;
+    }
   | { type: "tr"; cells: string[] };
 
 export interface TocEntry {
@@ -372,11 +378,14 @@ export function parseFM(
     title?: string;
     num?: string;
     fmIndex?: Record<string, number>;
+    /** Map of "Figure 1-1" / "Table 2-3" → public URL of rendered page image */
+    figureUrls?: Record<string, string>;
   } = {},
 ): ParsedFM {
   const lines = md.replace(/\r/g, "").split("\n");
   const fmIndex = opts.fmIndex;
   const currentFm = opts.num;
+  const figureUrls = opts.figureUrls;
   const il = (s: string) => inline(s, fmIndex, currentFm);
 
   let date = "",
@@ -459,7 +468,8 @@ export function parseFM(
     const fig = figCaption(t);
     if (fig) {
       flushPara();
-      blocks.push({ type: "fig", ...fig });
+      const url = figureUrls?.[fig.label];
+      blocks.push({ type: "fig", ...fig, ...(url ? { url } : {}) });
       debris = 1;
       continue;
     }

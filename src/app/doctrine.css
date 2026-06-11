@@ -1190,6 +1190,27 @@ body > div {
   text-transform: uppercase;
   color: var(--mute);
 }
+.article .a-fig-img {
+  display: block;
+  margin-top: 8px;
+  border: 1px solid var(--rule-d);
+  background: #fff;
+  overflow: hidden;
+  text-decoration: none;
+  cursor: zoom-in;
+  transition: border-color 0.12s;
+}
+.article .a-fig-img:hover {
+  border-color: var(--olive);
+}
+.article .a-fig-img img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 600px;
+  object-fit: contain;
+  object-position: center top;
+}
 
 /* nav toggle + drawer backdrop */
 .nav-toggle {

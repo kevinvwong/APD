@@ -3,6 +3,7 @@ import { fieldManuals } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { parseFM } from "@/lib/fm-parse";
+import { getFigureUrls } from "@/lib/figures";
 import { ReaderClient } from "@/components/ReaderClient";
 
 export const dynamic = "force-dynamic";
@@ -30,10 +31,13 @@ export default async function FmPage({
   const fmIndex: Record<string, number> = {};
   for (const f of allFms) fmIndex[f.fm_number] = f.id;
 
+  const figureUrls = getFigureUrls(fm.fm_number);
+
   const doc = parseFM(fm.content, {
     title: fm.title,
     num: fm.fm_number,
     fmIndex,
+    figureUrls,
   });
 
   const fmMeta = {

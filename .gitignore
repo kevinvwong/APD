@@ -25,3 +25,4 @@ __pycache__/
 
 # Design handoff assets — large binaries, not for version control
 design_handoff_doctrine_library/
+.env.blob
