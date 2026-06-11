@@ -306,7 +306,7 @@ export function AskPageClient({ fmId, fm }: Props) {
               >
                 APD
               </div>
-              <div className="ask-empty-h">Research Assistant</div>
+              <div className="ask-empty-h">Research assistant</div>
               <div className="ask-empty-p">
                 Ask a doctrinal question. Answers are synthesized only from the{" "}
                 {fm ? `text of ${fm.fm_number}` : "indexed manuals"} and cite

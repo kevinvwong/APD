@@ -22,3 +22,6 @@ __pycache__/
 
 # Generated — rebuild with: npm run search:index
 # src/data/search-index.json  ← committed intentionally so deploys work without DB at build time
+
+# Design handoff assets — large binaries, not for version control
+design_handoff_doctrine_library/

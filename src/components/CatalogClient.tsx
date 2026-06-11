@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { SeriesRail, SERIES_MAP, type Scope } from "./SeriesRail";
 
@@ -94,6 +94,7 @@ export function CatalogClient({ fms }: CatalogClientProps) {
   const [scope, setScope] = useState<Scope>(0);
   const [sort, setSort] = useState<SortKey>("number");
   const [railOpen, setRailOpen] = useState(false);
+  const listRef = useRef<HTMLDivElement>(null);
 
   const [bookmarks, setBookmarks] = useLocalStorage<number[]>(
     "apd_bookmarks",
@@ -150,7 +151,8 @@ export function CatalogClient({ fms }: CatalogClientProps) {
       (f) =>
         !n ||
         f.fm_number.toLowerCase().includes(n) ||
-        f.title.toLowerCase().includes(n),
+        f.title.toLowerCase().includes(n) ||
+        f.seriesName.toLowerCase().includes(n),
     );
     if (sort === "title")
       r = [...r].sort((a, b) => a.title.localeCompare(b.title));
@@ -176,10 +178,11 @@ export function CatalogClient({ fms }: CatalogClientProps) {
       .filter((g) => g.items.length);
   }, [manualMatches, sort, scope]);
 
-  // Scope setter that also resets rail drawer
+  // Scope setter that also resets rail drawer and scroll position
   const setScopeReset = useCallback((s: Scope) => {
     setScope((prev) => (prev === s ? 0 : s));
     setRailOpen(false);
+    if (listRef.current) listRef.current.scrollTop = 0;
   }, []);
 
   // Toggle bookmark
@@ -232,7 +235,8 @@ export function CatalogClient({ fms }: CatalogClientProps) {
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search titles &amp; numbers of all 51 manuals…"
+            placeholder="Search titles &amp; full text of all 51 manuals…"
+            autoFocus
           />
           {q && (
             <span className="clear" onClick={() => setQ("")}>
@@ -282,7 +286,7 @@ export function CatalogClient({ fms }: CatalogClientProps) {
         />
 
         {/* Listing */}
-        <div className="listing scroll">
+        <div className="listing scroll" ref={listRef}>
           {/* Continue Reading shelf */}
           {!searching && scope === 0 && recentItems.length > 0 && (
             <div className="shelf">
