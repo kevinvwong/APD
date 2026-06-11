@@ -164,13 +164,141 @@ function looksSentence(t: string): boolean {
 }
 
 function cleanHeading(raw: string): string {
-  return raw
+  let h = raw
     .replace(/^#+\s*/, "")
     .replace(/\.{2,}\s*\d*\s*$/, "")
     .replace(/\*+/g, "")
     .replace(/^[\s*·•\-–—]+/, "")
     .replace(/\s+$/, "")
     .trim();
+  // Spacing repair for headings with no internal spaces from PDF extraction.
+  // Only applies when the heading is entirely uppercase letters/digits/&
+  // (no lowercase, no spaces). Inserts spaces after ordinal prefixes and
+  // between recognized military / organizational words.
+  if (/^[A-Z0-9&]{8,}$/.test(h)) {
+    // Insert space after ordinal prefix: 389TH, 112ST, 102ND, 3RD
+    h = h.replace(/^(\d+(?:TH|ST|ND|RD))/i, "$1 ");
+    // Common doctrinal words to split between
+    const words = [
+      "ARMY",
+      "CORPS",
+      "DIVISION",
+      "BRIGADE",
+      "BATTALION",
+      "COMPANY",
+      "TEAM",
+      "REGIMENT",
+      "SQUADRON",
+      "COMMAND",
+      "CENTER",
+      "HEADQUARTERS",
+      "AVIATION",
+      "INTELLIGENCE",
+      "SIGNAL",
+      "INFANTRY",
+      "ARMOR",
+      "ARTILLERY",
+      "CAVALRY",
+      "ENGINEER",
+      "LOGISTICS",
+      "SUPPORT",
+      "SUSTAINMENT",
+      "SPECIAL",
+      "OPERATIONS",
+      "FORCES",
+      "FORCE",
+      "MILITARY",
+      "POLICE",
+      "MEDICAL",
+      "SECURITY",
+      "SUPPLY",
+      "TRANSPORTATION",
+      "MEDICAL",
+      "PSYCHOLOGICAL",
+      "CIVIL",
+      "AFFAIRS",
+      "RANGER",
+      "AIRBORNE",
+      "RECONNAISSANCE",
+      "SURVEILLANCE",
+      "TARGET",
+      "ACQUISITION",
+      "PROTECTION",
+      "FIRES",
+      "MOVEMENT",
+      "MANEUVER",
+      "COMBAT",
+      "GROUP",
+      "TASK",
+      "JOINT",
+      "COMBINED",
+      "UNITED",
+      "STATES",
+      "FIELD",
+      "MANUAL",
+      "DOCTRINE",
+      "STRATEGIC",
+      "TACTICAL",
+      "OPERATIONAL",
+      "ARMS",
+      "INFORMATION",
+      "NETWORK",
+      "CYBER",
+      "ELECTROMAGNETIC",
+      "WARFARE",
+      "TRAINING",
+      "READINESS",
+      "PERSONNEL",
+      "FINANCE",
+      "RESOURCES",
+      // Action verbs and concepts that appear in concatenated chapter headings
+      "CONSOLIDATE",
+      "GAINS",
+      "PHASE",
+      "ATTACK",
+      "DEFEND",
+      "SECURE",
+      "SHAPE",
+      "PROTECT",
+      "PENETRATE",
+      "DISRUPT",
+      "ENABLE",
+      "CONTROL",
+      "COMMUNICATIONS",
+      "COMPUTERS",
+      "COURSE",
+      "ACTION",
+      "CONTINUOUS",
+      "CHARACTERISTICS",
+      "FUNDAMENTALS",
+      "PRINCIPLES",
+      "CONSIDERATIONS",
+      "REQUIREMENTS",
+      "CAPABILITIES",
+      "BEHAVIORS",
+      "ATTRIBUTES",
+      "COMPETENCIES",
+      "RESPONSIBILITIES",
+      "MISSION",
+      "VISION",
+      "INTENT",
+      "CONCEPT",
+      "FRAMEWORK",
+      "FORM",
+      "SOUND",
+      "OPINIONS",
+      "ASSESS",
+    ];
+    // Sort by length descending so longer matches win first
+    const wordsRe = new RegExp(
+      "(" + words.sort((a, b) => b.length - a.length).join("|") + ")",
+      "g",
+    );
+    // Insert a space before each match (won't double-up since previous pass already separated)
+    h = h.replace(wordsRe, " $1");
+    h = h.replace(/\s+/g, " ").trim();
+  }
+  return h;
 }
 
 function isJunkHeading(
@@ -220,7 +348,9 @@ function inline(text: string): string {
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
     .replace(/(^|[^*])\*([^*\n]+?)\*(?!\*)/g, "$1<em>$2</em>")
     .replace(
-      /\b(ADP|ADRP|FM|ATP|JP|AR|DA Form|ATTP)\s(\d[\dA-Z.\-]*)/g,
+      // FM number ends at the last digit/letter — don't capture trailing
+      // sentence punctuation like the period in "FM 1-02.1."
+      /\b(ADP|ADRP|FM|ATP|JP|AR|DA Form|ATTP)\s(\d[\dA-Z.\-]*\d|\d)/g,
       '<span class="xref">$1&nbsp;$2</span>',
     );
 }
