@@ -21,8 +21,14 @@ import { parseFM } from "../src/lib/fm-parse";
 const db = drizzle(neon(process.env.DATABASE_URL!), {});
 const CTRL = /[\x00-\x08\x0b\x0c\x0e-\x1f]/g;
 const stripTags = (s: string) =>
-  s.replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<")
-   .replace(/&gt;/g, ">").replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/ /g, " ");
+  s
+    .replace(/<[^>]+>/g, "")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&#39;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/ /g, " ");
 
 interface SectionRow {
   fm_id: number;
@@ -36,14 +42,24 @@ interface SectionRow {
 
 async function main() {
   const rows = await db
-    .select({ id: fieldManuals.id, fm_number: fieldManuals.fm_number, title: fieldManuals.title, content: fieldManuals.content })
+    .select({
+      id: fieldManuals.id,
+      fm_number: fieldManuals.fm_number,
+      title: fieldManuals.title,
+      content: fieldManuals.content,
+    })
     .from(fieldManuals);
 
   const sections: SectionRow[] = [];
   for (const fm of rows) {
-    const doc = parseFM((fm.content || "").replace(CTRL, ""), { title: fm.title, num: fm.fm_number });
+    const doc = parseFM((fm.content || "").replace(CTRL, ""), {
+      title: fm.title,
+      num: fm.fm_number,
+    });
     const headIdx: Record<string, number> = {};
-    doc.blocks.forEach((b, i) => { if (b.type === "h") headIdx[b.id] = i; });
+    doc.blocks.forEach((b, i) => {
+      if (b.type === "h") headIdx[b.id] = i;
+    });
 
     let crumb = "";
     for (let t = 0; t < doc.toc.length; t++) {
@@ -51,18 +67,22 @@ async function main() {
       const start = headIdx[entry.id];
       if (start == null) continue;
       const nextId = doc.toc[t + 1]?.id;
-      const end = nextId != null && headIdx[nextId] != null ? headIdx[nextId] : doc.blocks.length;
+      const end =
+        nextId != null && headIdx[nextId] != null
+          ? headIdx[nextId]
+          : doc.blocks.length;
       if (entry.level === 1) crumb = entry.text;
 
       const buf: string[] = [];
-      for (let i = start + 1; i < end && buf.join(" ").length < 1100; i++) {
+      for (let i = start + 1; i < end; i++) {
         const b = doc.blocks[i];
         if (b.type === "p" || b.type === "li") buf.push(stripTags(b.html));
         else if (b.type === "fig" && b.text) buf.push(b.text);
         else if (b.type === "tr") buf.push(b.cells.map(stripTags).join(" "));
         else if (b.type === "h") buf.push(b.text);
       }
-      const body = buf.join(" ").replace(/\s+/g, " ").trim().slice(0, 1000);
+      // No char cap — Postgres stores full text; tsvector GIN index handles search
+      const body = buf.join(" ").replace(/\s+/g, " ").trim();
       sections.push({
         fm_id: fm.id,
         anchor: entry.id,
@@ -92,7 +112,12 @@ async function main() {
     }
   }
 
-  console.log(`Indexed ${inserted} sections across ${fmIds.length} manual(s) -> fm_sections`);
+  console.log(
+    `Indexed ${inserted} sections across ${fmIds.length} manual(s) -> fm_sections`,
+  );
   process.exit(0);
 }
-main().catch((e) => { console.error(e); process.exit(1); });
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});
