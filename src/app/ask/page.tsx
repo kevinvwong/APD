@@ -1,4 +1,5 @@
 // src/app/ask/page.tsx — Library-wide Ask page (no FM scope)
+import { Suspense } from "react";
 import { AskPageClient } from "@/components/AskPageClient";
 
 export const metadata = {
@@ -8,5 +9,9 @@ export const metadata = {
 };
 
 export default function AskPage() {
-  return <AskPageClient fmId={null} />;
+  return (
+    <Suspense fallback={null}>
+      <AskPageClient fmId={null} />
+    </Suspense>
+  );
 }

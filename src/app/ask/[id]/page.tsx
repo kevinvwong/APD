@@ -1,4 +1,5 @@
 // src/app/ask/[id]/page.tsx — FM-scoped Ask page
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { db } from "@/db";
 import { fieldManuals } from "@/db/schema";
@@ -28,5 +29,9 @@ export default async function AskFmPage({
 
   if (!fm) notFound();
 
-  return <AskPageClient fmId={fm.id} fm={fm} />;
+  return (
+    <Suspense fallback={null}>
+      <AskPageClient fmId={fm.id} fm={fm} />
+    </Suspense>
+  );
 }
