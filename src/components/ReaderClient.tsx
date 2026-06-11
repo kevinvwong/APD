@@ -10,10 +10,7 @@ export interface FmMeta {
   id: number;
   fm_number: string;
   title: string;
-  filename: string;
   word_count: number;
-  char_count: number;
-  created_at: Date;
 }
 
 interface Props {
