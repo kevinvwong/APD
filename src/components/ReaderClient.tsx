@@ -88,10 +88,14 @@ export function ReaderClient({ fm, doc, fmIndex }: Props) {
     // inline() renders xrefs with &nbsp; (U+00A0); normalize to space and
     // strip trailing sentence punctuation before fmIndex lookup
     // ("FM 1-02.1." -> "FM 1-02.1").
+    // Build U+00A0 (non-breaking space) at runtime — the build pipeline
+    // has been observed to corrupt the literal char in regex sources.
+    const NBSP = String.fromCharCode(160);
+    const NBSP_RE = new RegExp(NBSP, "g");
     const wireXrefs = () => {
       root.querySelectorAll<HTMLElement>(".xref").forEach((el) => {
         if (el.classList.contains("xref-live")) return;
-        const raw = (el.textContent ?? "").replace(/ /g, " ").trim();
+        const raw = (el.textContent ?? "").replace(NBSP_RE, " ").trim();
         const t = raw.replace(/[.,;:)\]]+$/, "");
         if (fmIndex[t] !== undefined && t !== fm.fm_number) {
           el.classList.add("xref-live");
