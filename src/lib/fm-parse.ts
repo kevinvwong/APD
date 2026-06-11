@@ -285,8 +285,15 @@ export function parseFM(
       continue;
     }
 
-    // P-1: skip garbled CP1252 lines (characteristic pattern: backslash sequences)
+    // P-1: skip garbled CP1252 / font-encoding lines
+    // Backslash-sequence garbling: \DQXDU\ \6HSWHPEHU\ etc.
     if (/\\[A-Z0-9]{3,}/.test(t) && !/https?:\/\//.test(t)) {
+      flushPara();
+      continue;
+    }
+    // Control-character garbling: \x03-separated glyph sequences from bad font ToUnicode tables
+    // eslint-disable-next-line no-control-regex
+    if (/[\x00-\x08\x0b\x0c\x0e-\x1f]/.test(t)) {
       flushPara();
       continue;
     }
