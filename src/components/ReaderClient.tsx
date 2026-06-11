@@ -84,27 +84,8 @@ export function ReaderClient({ fm, doc, fmIndex }: Props) {
 
     const els = measure();
 
-    // Mark cross-references that match a known FM number.
-    // inline() renders xrefs with &nbsp; (U+00A0); normalize to space and
-    // strip trailing sentence punctuation before fmIndex lookup
-    // ("FM 1-02.1." -> "FM 1-02.1").
-    // Build U+00A0 (non-breaking space) at runtime — the build pipeline
-    // has been observed to corrupt the literal char in regex sources.
-    const NBSP = String.fromCharCode(160);
-    const NBSP_RE = new RegExp(NBSP, "g");
-    const wireXrefs = () => {
-      root.querySelectorAll<HTMLElement>(".xref").forEach((el) => {
-        if (el.classList.contains("xref-live")) return;
-        const raw = (el.textContent ?? "").replace(NBSP_RE, " ").trim();
-        const t = raw.replace(/[.,;:)\]]+$/, "");
-        if (fmIndex[t] !== undefined && t !== fm.fm_number) {
-          el.classList.add("xref-live");
-          el.dataset.num = t;
-        }
-      });
-    };
-    wireXrefs();
-    requestAnimationFrame(() => wireXrefs());
+    // xref links are now rendered server-side as <a class="xref xref-live">
+    // by parseFM with fmIndex — no client-side wiring needed.
 
     if (!goAnchor() && els.length) {
       setActiveId(els[0].dataset.hid ?? null);
@@ -120,7 +101,7 @@ export function ReaderClient({ fm, doc, fmIndex }: Props) {
       document.fonts.ready.then(reflow);
     }
     return () => clearTimeout(t1);
-  }, [doc, fm.fm_number, fmIndex]);
+  }, [doc, fm.fm_number]);
 
   const onScroll = useCallback(() => {
     const el = artRef.current;
@@ -169,12 +150,13 @@ export function ReaderClient({ fm, doc, fmIndex }: Props) {
     });
   };
 
+  // Intercept clicks on server-rendered xref-live anchors for SPA navigation.
   const onArtClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
-    const x = target.closest<HTMLElement>(".xref-live");
-    if (x?.dataset.num) {
-      const targetId = fmIndex[x.dataset.num];
-      if (targetId !== undefined) router.push(`/fm/${targetId}`);
+    const a = target.closest<HTMLAnchorElement>("a.xref-live");
+    if (a && a.getAttribute("href")?.startsWith("/fm/")) {
+      e.preventDefault();
+      router.push(a.getAttribute("href")!);
     }
   };
 

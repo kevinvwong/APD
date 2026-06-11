@@ -338,7 +338,11 @@ function isJunkHeading(
   return false;
 }
 
-function inline(text: string): string {
+function inline(
+  text: string,
+  fmIndex?: Record<string, number>,
+  currentFm?: string,
+): string {
   text = text.replace(/\*{4,}/g, (m) => m.slice(0, 3));
   return text
     .replace(/&/g, "&amp;")
@@ -351,15 +355,29 @@ function inline(text: string): string {
       // FM number ends at the last digit/letter — don't capture trailing
       // sentence punctuation like the period in "FM 1-02.1."
       /\b(ADP|ADRP|FM|ATP|JP|AR|DA Form|ATTP)\s(\d[\dA-Z.\-]*\d|\d)/g,
-      '<span class="xref">$1&nbsp;$2</span>',
+      (_match, prefix: string, num: string) => {
+        const key = `${prefix} ${num}`;
+        if (fmIndex && fmIndex[key] !== undefined && key !== currentFm) {
+          const id = fmIndex[key];
+          return `<a class="xref xref-live" href="/fm/${id}">${prefix}&nbsp;${num}</a>`;
+        }
+        return `<span class="xref">${prefix}&nbsp;${num}</span>`;
+      },
     );
 }
 
 export function parseFM(
   md: string,
-  opts: { title?: string; num?: string } = {},
+  opts: {
+    title?: string;
+    num?: string;
+    fmIndex?: Record<string, number>;
+  } = {},
 ): ParsedFM {
   const lines = md.replace(/\r/g, "").split("\n");
+  const fmIndex = opts.fmIndex;
+  const currentFm = opts.num;
+  const il = (s: string) => inline(s, fmIndex, currentFm);
 
   let date = "",
     restriction = "";
@@ -401,7 +419,7 @@ export function parseFM(
       .join(" ")
       .replace(/\s{2,}/g, " ")
       .trim();
-    if (text) blocks.push({ type: "p", html: inline(text) });
+    if (text) blocks.push({ type: "p", html: il(text) });
     para = [];
   };
 
@@ -468,7 +486,7 @@ export function parseFM(
       const cells = t
         .replace(/^\||\|$/g, "")
         .split("|")
-        .map((c) => inline(c.trim()));
+        .map((c) => il(c.trim()));
       blocks.push({ type: "tr", cells });
       continue;
     }
@@ -502,7 +520,7 @@ export function parseFM(
       flushPara();
       blocks.push({
         type: "li",
-        html: inline(t.replace(/^([-*•‣◦]|\d+[.)])\s+/, "")),
+        html: il(t.replace(/^([-*•‣◦]|\d+[.)])\s+/, "")),
       });
       continue;
     }
@@ -538,7 +556,7 @@ export function parseFM(
       i = j - 1; // advance past consumed lines
       const textLine = textParts.join(" ").trim();
       if (textLine) {
-        blocks.push({ type: "li", html: inline(textLine) });
+        blocks.push({ type: "li", html: il(textLine) });
       }
       continue;
     }
