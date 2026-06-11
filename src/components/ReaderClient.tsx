@@ -49,9 +49,11 @@ export function ReaderClient({ fm, doc, fmIndex }: Props) {
 
     const measure = () => {
       const els = [...root.querySelectorAll<HTMLElement>("[data-hid]")];
+      const containerTop = root.getBoundingClientRect().top;
       headOffsets.current = els.map((el) => ({
         id: el.dataset.hid!,
-        top: el.offsetTop,
+        // Store position relative to current scroll position so onScroll can compare against scrollTop
+        top: el.getBoundingClientRect().top - containerTop + root.scrollTop,
       }));
       return els;
     };
@@ -61,7 +63,9 @@ export function ReaderClient({ fm, doc, fmIndex }: Props) {
       if (!hash) return false;
       const target = root.querySelector<HTMLElement>(`[data-hid="${hash}"]`);
       if (target) {
-        root.scrollTop = target.offsetTop - 24;
+        const containerTop = root.getBoundingClientRect().top;
+        const targetTop = target.getBoundingClientRect().top;
+        root.scrollTop += targetTop - containerTop - 24;
         setActiveId(hash);
         return true;
       }
@@ -115,7 +119,13 @@ export function ReaderClient({ fm, doc, fmIndex }: Props) {
     const el = artRef.current;
     if (!el) return;
     const target = el.querySelector<HTMLElement>(`[data-hid="${id}"]`);
-    if (target) el.scrollTop = target.offsetTop - 24;
+    if (target) {
+      // getBoundingClientRect is relative to viewport; adjust by the container's own rect
+      const containerTop = el.getBoundingClientRect().top;
+      const targetTop = target.getBoundingClientRect().top;
+      el.scrollTop += targetTop - containerTop - 24;
+      setActiveId(id);
+    }
   };
 
   const toggleBookmark = () => {
