@@ -371,180 +371,182 @@ export function ReaderClient({
     "Approved for public release; distribution is unlimited.";
 
   return (
-    <div className="reader">
-      {/* Backdrop for mobile TOC */}
-      <div
-        className={"nav-backdrop" + (tocOpen ? " show" : "")}
-        onClick={() => setTocOpen(false)}
-      />
+    <div className="app">
+      <div className="reader">
+        {/* Backdrop for mobile TOC */}
+        <div
+          className={"nav-backdrop" + (tocOpen ? " show" : "")}
+          onClick={() => setTocOpen(false)}
+        />
 
-      {/* TOC panel */}
-      <div className={"toc" + (tocOpen ? " open" : "")}>
-        <div className="toc-head">
-          <Link href="/" className="backlink">
-            ‹ Library
-          </Link>
-          <div className="toc-num">{fm.fm_number}</div>
-          <div className="toc-title">{fm.title}</div>
-        </div>
-        <div className="toc-list scroll">
-          <div className="toc-label">Contents</div>
-          {doc.toc.length === 0 && (
-            <div
-              style={{
-                padding: "8px 10px",
-                color: "var(--mute)",
-                fontSize: 13,
-              }}
-            >
-              No sections detected.
-            </div>
-          )}
-          {doc.toc.map((t) => (
-            <button
-              key={t.id}
-              className={
-                "toc-item lvl" + t.level + (activeId === t.id ? " on" : "")
-              }
-              onClick={() => jump(t.id)}
-            >
-              {t.text}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Document */}
-      <div className="doc">
-        <div className="doc-band">
-          <div className="doc-band-top">
-            <div className="band-left">
-              <button
-                className="nav-toggle"
-                onClick={() => setTocOpen((o) => !o)}
+        {/* TOC panel */}
+        <div className={"toc" + (tocOpen ? " open" : "")}>
+          <div className="toc-head">
+            <Link href="/" className="backlink">
+              ‹ Library
+            </Link>
+            <div className="toc-num">{fm.fm_number}</div>
+            <div className="toc-title">{fm.title}</div>
+          </div>
+          <div className="toc-list scroll">
+            <div className="toc-label">Contents</div>
+            {doc.toc.length === 0 && (
+              <div
+                style={{
+                  padding: "8px 10px",
+                  color: "var(--mute)",
+                  fontSize: 13,
+                }}
               >
-                ☰ Contents
+                No sections detected.
+              </div>
+            )}
+            {doc.toc.map((t) => (
+              <button
+                key={t.id}
+                className={
+                  "toc-item lvl" + t.level + (activeId === t.id ? " on" : "")
+                }
+                onClick={() => jump(t.id)}
+              >
+                {t.text}
               </button>
-              <div>
-                <Link
-                  href="/"
-                  className="doc-num"
+            ))}
+          </div>
+        </div>
+
+        {/* Document */}
+        <div className="doc">
+          <div className="doc-band">
+            <div className="doc-band-top">
+              <div className="band-left">
+                <button
+                  className="nav-toggle"
+                  onClick={() => setTocOpen((o) => !o)}
+                >
+                  ☰ Contents
+                </button>
+                <div>
+                  <Link
+                    href="/"
+                    className="doc-num"
+                    style={{
+                      textDecoration: "none",
+                      color: "inherit",
+                      opacity: 0.8,
+                    }}
+                  >
+                    ‹ {fm.fm_number}
+                  </Link>
+                  <div className="doc-title">{fm.title}</div>
+                </div>
+              </div>
+              <div className="doc-side">
+                <div className="doc-actions">
+                  <Link href={`/ask/${fm.id}`} className="bm-btn">
+                    ✦ Ask
+                  </Link>
+                  <button
+                    className={"bm-btn" + (bookmarked ? " on" : "")}
+                    onClick={toggleBookmark}
+                  >
+                    {bookmarked ? "★ Bookmarked" : "☆ Bookmark"}
+                  </button>
+                </div>
+                <div className="doc-side-meta">
+                  {doc.meta.date || "—"}
+                  <br />
+                  {pages} pages
+                  <br />
+                  {(fm.word_count / 1000).toFixed(0)}k words
+                </div>
+              </div>
+            </div>
+            <div className="restrict">
+              <span className="dot" />
+              Distribution A — {restriction}
+            </div>
+            <div className="progress" style={{ width: progress + "%" }} />
+          </div>
+
+          <div
+            className="article scroll"
+            ref={artRef}
+            onScroll={onScroll}
+            onClick={onArtClick}
+            onMouseUp={onArtMouseUp}
+            style={{ position: "relative" }}
+          >
+            <div className="article-inner">
+              <Body blocks={doc.blocks} />
+            </div>
+            {toolbar && (
+              <div
+                className="highlight-toolbar"
+                style={{
+                  position: "absolute",
+                  top: toolbar.top,
+                  left: toolbar.left,
+                  zIndex: 40,
+                  background: "var(--ink)",
+                  color: "var(--paper)",
+                  padding: "6px 8px",
+                  borderRadius: 4,
+                  display: "flex",
+                  gap: 6,
+                  alignItems: "center",
+                  boxShadow: "0 4px 14px rgba(0,0,0,0.25)",
+                }}
+                onMouseDown={(e) => e.preventDefault()}
+              >
+                <span
                   style={{
-                    textDecoration: "none",
-                    color: "inherit",
+                    fontFamily: "var(--head)",
+                    fontSize: 10,
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
                     opacity: 0.8,
+                    marginRight: 4,
                   }}
                 >
-                  ‹ {fm.fm_number}
-                </Link>
-                <div className="doc-title">{fm.title}</div>
-              </div>
-            </div>
-            <div className="doc-side">
-              <div className="doc-actions">
-                <Link href={`/ask/${fm.id}`} className="bm-btn">
-                  ✦ Ask
-                </Link>
+                  Highlight
+                </span>
                 <button
-                  className={"bm-btn" + (bookmarked ? " on" : "")}
-                  onClick={toggleBookmark}
+                  onClick={() => saveHighlight("gold")}
+                  aria-label="Highlight gold"
+                  style={swatchStyle("var(--gold)")}
+                />
+                <button
+                  onClick={() => saveHighlight("olive")}
+                  aria-label="Highlight olive"
+                  style={swatchStyle("var(--olive)")}
+                />
+                <button
+                  onClick={() => saveHighlight("red")}
+                  aria-label="Highlight red"
+                  style={swatchStyle("var(--red)")}
+                />
+                <button
+                  onClick={() => {
+                    setToolbar(null);
+                    window.getSelection()?.removeAllRanges();
+                  }}
+                  style={{
+                    marginLeft: 4,
+                    background: "transparent",
+                    border: 0,
+                    color: "var(--paper)",
+                    cursor: "pointer",
+                    fontSize: 14,
+                    opacity: 0.7,
+                  }}
+                  aria-label="Cancel"
                 >
-                  {bookmarked ? "★ Bookmarked" : "☆ Bookmark"}
+                  ✕
                 </button>
               </div>
-              <div className="doc-side-meta">
-                {doc.meta.date || "—"}
-                <br />
-                {pages} pages
-                <br />
-                {(fm.word_count / 1000).toFixed(0)}k words
-              </div>
-            </div>
+            )}
           </div>
-          <div className="restrict">
-            <span className="dot" />
-            Distribution A — {restriction}
-          </div>
-          <div className="progress" style={{ width: progress + "%" }} />
-        </div>
-
-        <div
-          className="article scroll"
-          ref={artRef}
-          onScroll={onScroll}
-          onClick={onArtClick}
-          onMouseUp={onArtMouseUp}
-          style={{ position: "relative" }}
-        >
-          <div className="article-inner">
-            <Body blocks={doc.blocks} />
-          </div>
-          {toolbar && (
-            <div
-              className="highlight-toolbar"
-              style={{
-                position: "absolute",
-                top: toolbar.top,
-                left: toolbar.left,
-                zIndex: 40,
-                background: "var(--ink)",
-                color: "var(--paper)",
-                padding: "6px 8px",
-                borderRadius: 4,
-                display: "flex",
-                gap: 6,
-                alignItems: "center",
-                boxShadow: "0 4px 14px rgba(0,0,0,0.25)",
-              }}
-              onMouseDown={(e) => e.preventDefault()}
-            >
-              <span
-                style={{
-                  fontFamily: "var(--head)",
-                  fontSize: 10,
-                  letterSpacing: "0.1em",
-                  textTransform: "uppercase",
-                  opacity: 0.8,
-                  marginRight: 4,
-                }}
-              >
-                Highlight
-              </span>
-              <button
-                onClick={() => saveHighlight("gold")}
-                aria-label="Highlight gold"
-                style={swatchStyle("var(--gold)")}
-              />
-              <button
-                onClick={() => saveHighlight("olive")}
-                aria-label="Highlight olive"
-                style={swatchStyle("var(--olive)")}
-              />
-              <button
-                onClick={() => saveHighlight("red")}
-                aria-label="Highlight red"
-                style={swatchStyle("var(--red)")}
-              />
-              <button
-                onClick={() => {
-                  setToolbar(null);
-                  window.getSelection()?.removeAllRanges();
-                }}
-                style={{
-                  marginLeft: 4,
-                  background: "transparent",
-                  border: 0,
-                  color: "var(--paper)",
-                  cursor: "pointer",
-                  fontSize: 14,
-                  opacity: 0.7,
-                }}
-                aria-label="Cancel"
-              >
-                ✕
-              </button>
-            </div>
-          )}
         </div>
       </div>
     </div>

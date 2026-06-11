@@ -31,6 +31,7 @@ body {
   font-family: var(--serif);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  overflow: hidden;
 }
 /* Next.js App Router inserts a wrapper div between body and .app.
    Propagate full height through it so .app can fill the viewport. */
@@ -1371,5 +1372,308 @@ body > div {
     text-align: left;
     width: 100%;
     font-size: 11px;
+  }
+}
+
+/* =========================================================================
+   Landing page (anonymous-only)
+   ========================================================================= */
+.landing {
+  background: var(--paper);
+  color: var(--ink);
+  min-height: 100dvh;
+  /* Override the app-wide body { overflow: hidden } so the landing page
+     can be vertically scrolled like a normal marketing page. */
+  height: auto;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+/* Allow body to scroll when the landing is mounted */
+body:has(.landing) {
+  overflow: auto;
+  height: auto;
+}
+
+.landing-top {
+  background: var(--card);
+  border-bottom: 3px double var(--olive);
+}
+.landing-top-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 18px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+.landing-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.landing-kicker {
+  font-family: var(--head);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  color: var(--olive);
+  text-transform: uppercase;
+}
+.landing-brand-name {
+  font-family: var(--head);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  line-height: 1.05;
+  color: var(--ink);
+}
+.landing-top-actions {
+  display: flex;
+  gap: 10px;
+}
+.landing-btn {
+  font-family: var(--head);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: var(--olive);
+  color: var(--paper);
+  border: 1.5px solid var(--olive);
+  padding: 10px 18px;
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    border-color 0.12s;
+}
+.landing-btn:hover {
+  background: var(--olive-d);
+  border-color: var(--olive-d);
+}
+.landing-btn-ghost {
+  font-family: var(--head);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: transparent;
+  color: var(--ink);
+  border: 1.5px solid var(--rule-d);
+  padding: 10px 18px;
+  cursor: pointer;
+  transition: border-color 0.12s;
+}
+.landing-btn-ghost:hover {
+  border-color: var(--olive);
+}
+.landing-btn-lg {
+  font-size: 14px;
+  padding: 14px 26px;
+}
+
+.landing-hero {
+  flex: 1;
+}
+.landing-hero-inner {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 80px 32px 60px;
+}
+.landing-eyebrow {
+  display: inline-block;
+  font-family: var(--head);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--olive);
+  background: var(--card);
+  border: 1px solid var(--rule);
+  padding: 6px 14px;
+  margin-bottom: 24px;
+}
+.landing-title {
+  font-family: var(--head);
+  font-weight: 700;
+  font-size: 60px;
+  letter-spacing: 0.005em;
+  line-height: 1.05;
+  margin: 0 0 24px;
+  color: var(--ink);
+}
+.landing-lede {
+  font-size: 19px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  max-width: 640px;
+  margin: 0 0 32px;
+}
+.landing-cta {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.landing-fineprint {
+  font-family: var(--head);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--mute);
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.landing-features {
+  background: var(--card);
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+.landing-features-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 70px 32px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+}
+.landing-feature {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--olive);
+  padding: 28px 26px;
+}
+.landing-feature-icon {
+  font-size: 26px;
+  color: var(--olive);
+  margin-bottom: 14px;
+  line-height: 1;
+}
+.landing-feature-title {
+  font-family: var(--head);
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--olive-d);
+  margin-bottom: 10px;
+  line-height: 1.2;
+}
+.landing-feature-body {
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+.landing-how {
+  background: var(--paper);
+}
+.landing-how-inner {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 70px 32px;
+}
+.landing-section-h {
+  font-family: var(--head);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--olive);
+  margin-bottom: 18px;
+}
+.landing-steps {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.landing-steps li {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  font-size: 17.5px;
+  line-height: 1.55;
+  color: var(--ink);
+}
+.landing-step-num {
+  font-family: var(--head);
+  font-weight: 700;
+  font-size: 13px;
+  background: var(--olive);
+  color: var(--paper);
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.landing-bottom {
+  background: var(--olive);
+  color: var(--paper);
+}
+.landing-bottom-inner {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 60px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.landing-bottom-title {
+  font-family: var(--head);
+  font-weight: 700;
+  font-size: 30px;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+.landing-bottom .landing-btn {
+  background: var(--paper);
+  color: var(--olive);
+  border-color: var(--paper);
+}
+.landing-bottom .landing-btn:hover {
+  background: var(--card);
+  color: var(--olive-d);
+}
+
+.landing-foot {
+  background: var(--card);
+  border-top: 1px solid var(--rule);
+  font-family: var(--head);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mute);
+  text-align: center;
+  padding: 22px 32px;
+}
+
+@media (max-width: 780px) {
+  .landing-title {
+    font-size: 38px;
+  }
+  .landing-hero-inner {
+    padding: 50px 22px 40px;
+  }
+  .landing-features-inner {
+    grid-template-columns: 1fr;
+    padding: 50px 22px;
+    gap: 18px;
+  }
+  .landing-bottom-inner {
+    padding: 40px 22px;
+  }
+  .landing-bottom-title {
+    font-size: 22px;
   }
 }
