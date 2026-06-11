@@ -367,6 +367,32 @@ export function parseFM(
       continue;
     }
 
+    // Standalone bullet marker on its own line (PDF extraction artifact):
+    // "•\n" followed by the text on the next line.
+    if (/^[•‣◦]$/.test(t)) {
+      flushPara();
+      // Peek forward for the text content
+      let textLine = "";
+      let j = i + 1;
+      while (j < lines.length && !lines[j].trim()) j++; // skip blanks
+      if (j < lines.length && j < sigBlockStart) {
+        const next = lines[j].trim();
+        if (
+          next &&
+          !next.startsWith("#") &&
+          !isBullet(next) &&
+          !/^[•‣◦]$/.test(next)
+        ) {
+          textLine = next;
+          i = j; // advance past the consumed line
+        }
+      }
+      if (textLine) {
+        blocks.push({ type: "li", html: inline(textLine) });
+      }
+      continue;
+    }
+
     // P-2: suppress rank/name body lines that follow sig-block-like content
     if (RANK_LINE_RE.test(t)) continue;
 

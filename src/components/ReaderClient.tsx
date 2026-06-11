@@ -32,11 +32,21 @@ export function ReaderClient({ fm, doc, fmIndex }: Props) {
   // Estimated pages (250 words per page)
   const pages = Math.max(1, Math.ceil(fm.word_count / 250));
 
-  // Load bookmark state from localStorage (client-only)
+  // Load bookmark state + record this manual as recently read
   useEffect(() => {
     try {
-      const stored = JSON.parse(localStorage.getItem("apd:bookmarks") || "[]");
+      const stored = JSON.parse(localStorage.getItem("apd_bookmarks") || "[]");
       setBookmarked(Array.isArray(stored) && stored.includes(fm.id));
+    } catch {
+      // ignore
+    }
+    // Write to recently-read list (max 12, most recent first)
+    try {
+      const prev: number[] = JSON.parse(
+        localStorage.getItem("apd_recents") || "[]",
+      );
+      const updated = [fm.id, ...prev.filter((x) => x !== fm.id)].slice(0, 12);
+      localStorage.setItem("apd_recents", JSON.stringify(updated));
     } catch {
       // ignore
     }
@@ -133,12 +143,12 @@ export function ReaderClient({ fm, doc, fmIndex }: Props) {
       const next = !prev;
       try {
         const stored: number[] = JSON.parse(
-          localStorage.getItem("apd:bookmarks") || "[]",
+          localStorage.getItem("apd_bookmarks") || "[]",
         );
         const updated = next
           ? [...stored.filter((x) => x !== fm.id), fm.id]
           : stored.filter((x) => x !== fm.id);
-        localStorage.setItem("apd:bookmarks", JSON.stringify(updated));
+        localStorage.setItem("apd_bookmarks", JSON.stringify(updated));
       } catch {
         // ignore
       }
@@ -215,7 +225,17 @@ export function ReaderClient({ fm, doc, fmIndex }: Props) {
                 ☰ Contents
               </button>
               <div>
-                <div className="doc-num">{fm.fm_number}</div>
+                <Link
+                  href="/"
+                  className="doc-num"
+                  style={{
+                    textDecoration: "none",
+                    color: "inherit",
+                    opacity: 0.8,
+                  }}
+                >
+                  ‹ {fm.fm_number}
+                </Link>
                 <div className="doc-title">{fm.title}</div>
               </div>
             </div>

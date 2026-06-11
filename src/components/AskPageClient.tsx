@@ -11,12 +11,88 @@ import {
   type ChatTurn,
 } from "@/lib/ask-client";
 
-const SUGGEST = [
+const SUGGEST_GLOBAL = [
   "What are the tenets of multidomain operations?",
   "How does Army doctrine define combat power?",
   "What is the role of a maneuver enhancement brigade?",
   "Summarize the characteristics of the defense.",
 ];
+
+// Per-FM suggested questions keyed by FM number
+const SUGGEST_FM: Record<string, string[]> = {
+  "FM 1-000": [
+    "What is the Army's purpose and role?",
+    "How does the Army organize its forces?",
+    "What are the Army's core competencies?",
+    "What defines Army culture and values?",
+  ],
+  "FM 2-0": [
+    "What are the intelligence warfighting function tasks?",
+    "How does the intelligence process work?",
+    "What is the role of the intelligence officer?",
+    "How is targeting supported by intelligence?",
+  ],
+  "FM 3-0": [
+    "What are the principles of multidomain operations?",
+    "How does the Army defeat enemy anti-access strategies?",
+    "What is the role of the corps in large-scale combat?",
+    "How does convergence apply in operations?",
+  ],
+  "FM 3-09": [
+    "How is fire support integrated into maneuver?",
+    "What are the responsibilities of the fire support officer?",
+    "How is the targeting process executed?",
+    "What are the principles of mass and economy of force in fires?",
+  ],
+  "FM 3-24": [
+    "What are the principles of counterinsurgency?",
+    "How does the population-centric approach work?",
+    "What is the role of host-nation forces in COIN?",
+    "How is intelligence gathered in a COIN environment?",
+  ],
+  "FM 3-90": [
+    "What are the forms of offensive action?",
+    "What is the difference between a movement to contact and an attack?",
+    "How is the defense organized?",
+    "What are the principles of pursuit?",
+  ],
+  "FM 5-0": [
+    "What is the operations process?",
+    "How is the MDMP conducted?",
+    "What are the elements of operational art?",
+    "How are plans and orders formatted?",
+  ],
+  "FM 6-0": [
+    "How does mission command work?",
+    "What are the principles of mission command?",
+    "How does the commander's intent guide subordinates?",
+    "What is the role of the staff in operations?",
+  ],
+  "FM 6-22": [
+    "What are the attributes of a leader?",
+    "How is leadership developed?",
+    "What is the difference between direct and organizational leadership?",
+    "How does the Army define toxic leadership?",
+  ],
+  "FM 7-22": [
+    "What are the components of holistic health and fitness?",
+    "How is physical readiness training structured?",
+    "What role does sleep play in soldier performance?",
+    "How is the H2F system implemented at the unit level?",
+  ],
+};
+
+function getSuggestions(fm?: { fm_number: string }): string[] {
+  if (!fm) return SUGGEST_GLOBAL;
+  return (
+    SUGGEST_FM[fm.fm_number] ?? [
+      `What are the key doctrinal principles in ${fm.fm_number}?`,
+      `What is the primary purpose of ${fm.fm_number}?`,
+      `Who are the primary users of ${fm.fm_number}?`,
+      `What organizations or units does ${fm.fm_number} apply to?`,
+    ]
+  );
+}
 
 interface FmInfo {
   id: number;
@@ -276,7 +352,7 @@ export function AskPageClient({ fmId, fm }: Props) {
       {/* Band */}
       <div className="ask-band">
         <Link
-          href="/"
+          href={fm ? `/fm/${fm.id}` : "/"}
           className="backlink"
           style={{
             color: "var(--paper)",
@@ -284,7 +360,7 @@ export function AskPageClient({ fmId, fm }: Props) {
             display: "inline-flex",
           }}
         >
-          ‹ Library
+          ‹ {fm ? fm.fm_number : "Library"}
         </Link>
         <div className="ask-band-title">Ask the Doctrine Library</div>
         <div className="ask-band-sub">
@@ -313,7 +389,7 @@ export function AskPageClient({ fmId, fm }: Props) {
                 the exact sections — tap a citation to jump there.
               </div>
               <div className="ask-sugs">
-                {SUGGEST.map((s) => (
+                {getSuggestions(fm).map((s) => (
                   <button key={s} className="sug" onClick={() => ask(s)}>
                     {s}
                   </button>

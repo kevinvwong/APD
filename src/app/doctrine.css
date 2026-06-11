@@ -1275,6 +1275,14 @@ body > div {
     padding-left: 20px;
     padding-right: 20px;
   }
+  /* Sort chips + Ask AI chip wrap to a second row on narrow screens */
+  .controls {
+    flex-wrap: wrap;
+  }
+  .controls .search {
+    flex-basis: 100%;
+    order: -1;
+  }
   .listing {
     padding-left: 20px;
     padding-right: 20px;
@@ -1291,5 +1299,18 @@ body > div {
   }
   .doc-title {
     font-size: 26px;
+  }
+  /* FM row: hide meta on very narrow screens */
+  .fm-meta {
+    display: none;
+  }
+  /* Masthead: allow meta to wrap */
+  .masthead {
+    flex-wrap: wrap;
+  }
+  .mast-meta {
+    text-align: left;
+    width: 100%;
+    font-size: 11px;
   }
 }

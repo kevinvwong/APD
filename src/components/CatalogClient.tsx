@@ -235,7 +235,7 @@ export function CatalogClient({ fms }: CatalogClientProps) {
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search titles &amp; full text of all 51 manuals…"
+            placeholder="Search by title or FM number…"
             autoFocus
           />
           {q && (
