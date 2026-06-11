@@ -49,12 +49,18 @@ export async function POST(req: NextRequest) {
     // on the actual parsed text below.
     const contentLength = Number(req.headers.get("content-length") || 0);
     if (contentLength > MAX_BODY_BYTES) {
-      return NextResponse.json({ error: "Payload too large." }, { status: 413 });
+      return NextResponse.json(
+        { error: "Payload too large." },
+        { status: 413 },
+      );
     }
 
     const raw = await req.text();
     if (raw.length > MAX_BODY_BYTES) {
-      return NextResponse.json({ error: "Payload too large." }, { status: 413 });
+      return NextResponse.json(
+        { error: "Payload too large." },
+        { status: 413 },
+      );
     }
 
     let body: any;
@@ -93,7 +99,10 @@ export async function POST(req: NextRequest) {
           text.trim().length > 0
         );
       })
-      .map((m) => ({ role: m.role, text: m.text.slice(0, MAX_HISTORY_TEXT_CHARS) }));
+      .map((m) => ({
+        role: m.role,
+        text: m.text.slice(0, MAX_HISTORY_TEXT_CHARS),
+      }));
 
     if (!question)
       return NextResponse.json({ error: "Missing question." }, { status: 400 });
@@ -103,7 +112,7 @@ export async function POST(req: NextRequest) {
         { status: 400 },
       );
 
-    const sources = await getSources(question, 8, fmId);
+    const sources = await getSources(question, 12, fmId);
 
     if (!sources.length && mode === "library") {
       return NextResponse.json({
