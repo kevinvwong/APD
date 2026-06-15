@@ -12,6 +12,10 @@ export interface FmRow {
   fm_number: string;
   title: string;
   word_count: number;
+  // Additive corpus metadata. Absent/null for legacy field-manual rows, which
+  // render exactly as before. 'book' rows get a "Book" badge + author byline.
+  source_type?: string | null;
+  author?: string | null;
 }
 
 type SortKey = "number" | "title" | "size";
@@ -394,21 +398,29 @@ export function CatalogClient({ fms }: CatalogClientProps) {
                       <span className="group-rule" />
                     </div>
                   )}
-                  {g.items.map((it) => (
-                    <Link key={it.id} href={`/fm/${it.id}`} className="fmrow">
-                      <Star
-                        on={bmSet.has(it.id)}
-                        onClick={() => toggleBookmark(it.id)}
-                      />
-                      <span className="fm-num">{it.fm_number}</span>
-                      <span className="fm-title">{it.title}</span>
-                      <span className="fm-meta">
-                        {it.pages} pp · {(it.word_count / 1000).toFixed(0)}k
-                        words
-                      </span>
-                      <span className="fm-chev">›</span>
-                    </Link>
-                  ))}
+                  {g.items.map((it) => {
+                    const isBook = it.source_type === "book";
+                    return (
+                      <Link key={it.id} href={`/fm/${it.id}`} className="fmrow">
+                        <Star
+                          on={bmSet.has(it.id)}
+                          onClick={() => toggleBookmark(it.id)}
+                        />
+                        <span className="fm-num">
+                          {isBook && it.author ? it.author : it.fm_number}
+                        </span>
+                        <span className="fm-title">
+                          {it.title}
+                          {isBook && <span className="fm-badge">Book</span>}
+                        </span>
+                        <span className="fm-meta">
+                          {it.pages} pp · {(it.word_count / 1000).toFixed(0)}k
+                          words
+                        </span>
+                        <span className="fm-chev">›</span>
+                      </Link>
+                    );
+                  })}
                 </div>
               ))}
             </>

@@ -46,6 +46,9 @@ export default async function FmPage({
     fm_number: fm.fm_number,
     title: fm.title,
     word_count: fm.word_count,
+    source_type: fm.source_type,
+    author: fm.author,
+    citation: fm.citation,
   };
 
   // Pull this user's saved highlights for this FM (if signed in)

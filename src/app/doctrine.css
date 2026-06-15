@@ -329,6 +329,21 @@ body > div {
   font-size: 17.5px;
   line-height: 1.25;
 }
+/* Small "Book" pill marking non-doctrine sources in the catalog. */
+.fm-badge {
+  display: inline-block;
+  margin-left: 10px;
+  vertical-align: middle;
+  font-family: var(--head);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--olive);
+  color: var(--paper);
+}
 .fm-meta {
   font-family: var(--head);
   font-size: 12px;

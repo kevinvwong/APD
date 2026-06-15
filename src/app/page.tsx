@@ -23,6 +23,8 @@ export default async function Home() {
       fm_number: sources.fm_number,
       title: sources.title,
       word_count: sources.word_count,
+      source_type: sources.source_type,
+      author: sources.author,
     })
     .from(sources)
     .orderBy(sources.fm_number);
