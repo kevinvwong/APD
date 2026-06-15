@@ -32,6 +32,11 @@ import path from "path";
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
 import { sources } from "../src/db/schema";
+import {
+  stripGutenberg,
+  htmlToMarkdown,
+  plainTextToMarkdown,
+} from "./book-convert";
 
 const db = drizzle(neon(process.env.DATABASE_URL!), {});
 const BOOKS_DIR = path.join(process.cwd(), "books");
@@ -55,92 +60,6 @@ function hasFlag(name: string): boolean {
 function flagValue(name: string): string | undefined {
   const i = process.argv.indexOf(`--${name}`);
   return i >= 0 ? process.argv[i + 1] : undefined;
-}
-
-const ENTITIES: Record<string, string> = {
-  "&amp;": "&",
-  "&lt;": "<",
-  "&gt;": ">",
-  "&quot;": '"',
-  "&#39;": "'",
-  "&apos;": "'",
-  "&nbsp;": " ",
-  "&mdash;": "—",
-  "&ndash;": "–",
-  "&hellip;": "…",
-  "&rsquo;": "’",
-  "&lsquo;": "‘",
-  "&rdquo;": "”",
-  "&ldquo;": "“",
-};
-function decodeEntities(s: string): string {
-  return s
-    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
-    .replace(/&[a-z]+;/gi, (m) => ENTITIES[m.toLowerCase()] ?? m);
-}
-
-/** Strip the Project Gutenberg license header/footer, keeping the work itself. */
-function stripGutenberg(t: string): string {
-  const start = t.match(
-    /\*\*\*\s*START OF (?:THE|THIS) PROJECT GUTENBERG EBOOK[^\n]*\*\*\*/i,
-  );
-  const end = t.match(
-    /\*\*\*\s*END OF (?:THE|THIS) PROJECT GUTENBERG EBOOK[^\n]*\*\*\*/i,
-  );
-  const s = start ? start.index! + start[0].length : 0;
-  const e = end ? end.index! : t.length;
-  return t.slice(s, e).trim();
-}
-
-/** Light HTML -> Markdown for single-page book HTML (e.g. Standard Ebooks). */
-function htmlToMarkdown(html: string): string {
-  let s = html;
-  const body = s.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
-  if (body) s = body[1];
-  s = s
-    .replace(/<(script|style|head|nav|header|footer)[\s\S]*?<\/\1>/gi, "")
-    .replace(/<h([1-6])[^>]*>([\s\S]*?)<\/h\1>/gi, (_, lvl, inner) => {
-      const txt = inner.replace(/<[^>]+>/g, "").trim();
-      return `\n\n${"#".repeat(Number(lvl))} ${txt}\n\n`;
-    })
-    .replace(/<li[^>]*>/gi, "\n- ")
-    .replace(/<\/li>/gi, "")
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/p>/gi, "\n\n")
-    .replace(/<p[^>]*>/gi, "")
-    .replace(/<\/?(blockquote|section|article|div|ul|ol|em|i|b|strong|span)[^>]*>/gi, "")
-    .replace(/<[^>]+>/g, "");
-  return decodeEntities(s)
-    .replace(/\n[ \t]+/g, "\n")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
-}
-
-const HEADING_RE =
-  /^(chapter|part|section|book|appendix|introduction|preface|foreword|conclusion)\b/i;
-
-/** Heuristic plain-text -> Markdown: detect chapter/part headings and ALL-CAPS
- *  short lines as headings; everything else becomes paragraphs. The downstream
- *  parser (fm-parse) is tolerant, so rough structure is sufficient for search. */
-function plainTextToMarkdown(raw: string): string {
-  const blocks = raw.replace(/\r\n/g, "\n").split(/\n\s*\n/);
-  const out: string[] = [];
-  for (const block of blocks) {
-    const lines = block.split("\n").map((l) => l.trim()).filter(Boolean);
-    if (!lines.length) continue;
-    const oneLine = lines.length === 1 ? lines[0] : "";
-    const isCaps =
-      oneLine.length > 0 &&
-      oneLine.length <= 70 &&
-      oneLine === oneLine.toUpperCase() &&
-      /[A-Z]/.test(oneLine);
-    if (oneLine && (HEADING_RE.test(oneLine) || isCaps)) {
-      out.push(`## ${oneLine.replace(/\.$/, "")}`);
-    } else {
-      out.push(lines.join(" "));
-    }
-  }
-  return out.join("\n\n").replace(/\n{3,}/g, "\n\n").trim();
 }
 
 async function fetchToMarkdown(book: Book): Promise<string> {
