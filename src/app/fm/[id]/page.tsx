@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { fieldManuals, userHighlights } from "@/db/schema";
+import { sources, userHighlights } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
@@ -20,15 +20,15 @@ export default async function FmPage({
 
   const [fm] = await db
     .select()
-    .from(fieldManuals)
-    .where(eq(fieldManuals.id, numId));
+    .from(sources)
+    .where(eq(sources.id, numId));
 
   if (!fm) notFound();
 
   // Build xref map: FM number → FM id (for cross-reference navigation)
   const allFms = await db
-    .select({ id: fieldManuals.id, fm_number: fieldManuals.fm_number })
-    .from(fieldManuals);
+    .select({ id: sources.id, fm_number: sources.fm_number })
+    .from(sources);
   const fmIndex: Record<string, number> = {};
   for (const f of allFms) fmIndex[f.fm_number] = f.id;
 

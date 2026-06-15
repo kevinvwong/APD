@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/db";
-import { userRecents, fieldManuals } from "@/db/schema";
+import { userRecents, sources } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
 
 export const runtime = "nodejs";
@@ -21,11 +21,11 @@ export async function GET() {
       fm_id: userRecents.fm_id,
       last_anchor: userRecents.last_anchor,
       last_read_at: userRecents.last_read_at,
-      fm_number: fieldManuals.fm_number,
-      fm_title: fieldManuals.title,
+      fm_number: sources.fm_number,
+      fm_title: sources.title,
     })
     .from(userRecents)
-    .leftJoin(fieldManuals, eq(userRecents.fm_id, fieldManuals.id))
+    .leftJoin(sources, eq(userRecents.fm_id, sources.id))
     .where(eq(userRecents.user_id, userId))
     .orderBy(sql`${userRecents.last_read_at} DESC`)
     .limit(20);

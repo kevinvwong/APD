@@ -111,6 +111,7 @@ npm run dev
 | `npm run dev`          | Start dev server                     |
 | `npm run build`        | Production build                     |
 | `npm run db:seed`      | Seed field manuals into Neon         |
+| `npm run book:ingest`  | Ingest a Markdown book as a private `book` source (see below) |
 | `npm run search:index` | Rebuild keyword search index from DB |
 | `npm run db:generate`  | Generate Drizzle migration files     |
 | `npm run db:migrate`   | Run pending migrations               |
@@ -118,6 +119,33 @@ npm run dev
 ## FM content
 
 All 51 field manuals are U.S. government publications and are in the public domain. Source: [armypubs.army.mil](https://armypubs.army.mil). The markdown versions in this repo were converted from the official PDFs.
+
+## Sources beyond FMs (books)
+
+The corpus is modeled as neutral **sources**, not just Field Manuals. Each row in the `sources` table carries a `source_type` (`doctrine` | `book`), an `access` level (`public` | `private`), and — for books — `author` / `citation`. This lets the library hold curated reference works (for example, organization-theory texts that complement the doctrine) alongside the public-domain FMs.
+
+**Copyright:** Field Manuals are public-domain government works; most books are not. The schema defaults book sources to `access = "private"`, and retrieval only surfaces private sources to **signed-in** users. Books are **not** bundled in this repo — supply your own licensed copy.
+
+To add a book:
+
+```bash
+# 1. Convert your licensed PDF to Markdown (PyMuPDF; see pdf_to_md.py)
+python pdf_to_md.py            # or any tool that yields heading-structured .md
+
+# 2. Ingest it as a private "book" source
+npm run book:ingest -- \
+  --file ./books/reframing-organizations.md \
+  --title "Reframing Organizations" \
+  --ref "Bolman & Deal 2021" \
+  --author "Lee G. Bolman; Terrence E. Deal" \
+  --citation "Bolman, L. G., & Deal, T. E. (2021). Reframing Organizations (7th ed.). Jossey-Bass."
+
+# 3. Rebuild the retrieval index
+npm run search:index           # JSON path (default)
+# npm run index:db             # OPTIONAL Postgres full-text path
+```
+
+The book then appears in the signed-in catalog and is retrievable by the Ask assistant for authenticated users.
 
 ## Contributing
 

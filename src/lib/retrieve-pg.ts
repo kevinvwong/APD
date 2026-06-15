@@ -26,6 +26,8 @@ interface SectionRow extends Record<string, unknown> {
   h: string;
   c: string;
   b: string;
+  st: string;
+  ac: string;
 }
 
 /**
@@ -40,6 +42,7 @@ export async function retrieve(
   question: string,
   k = 8,
   restrictFm?: number | null,
+  includePrivate = false,
 ): Promise<Section[]> {
   const q = question.trim();
   if (!q) return [];
@@ -53,18 +56,25 @@ export async function retrieve(
   const fmFilter =
     restrictFm != null ? sql`AND fm_id = ${restrictFm}` : sql``;
 
+  // Gate private sources (e.g. copyrighted books) unless the caller is
+  // authenticated, mirroring the JSON path's includePrivate behaviour.
+  const accessFilter = includePrivate ? sql`` : sql`AND access = 'public'`;
+
   const rows = await db.execute<SectionRow>(sql`
     SELECT
-      fm_id      AS f,
-      fm_number  AS n,
-      fm_title   AS ft,
-      anchor     AS a,
-      heading    AS h,
-      crumb      AS c,
-      body       AS b
+      fm_id        AS f,
+      fm_number    AS n,
+      fm_title     AS ft,
+      anchor       AS a,
+      heading      AS h,
+      crumb        AS c,
+      body         AS b,
+      source_type  AS st,
+      access       AS ac
     FROM fm_sections
     WHERE fts @@ ${tsquery}
     ${fmFilter}
+    ${accessFilter}
     ORDER BY ts_rank(fts, ${tsquery}) DESC
     LIMIT ${k}
   `);
@@ -82,5 +92,7 @@ export async function retrieve(
     h: r.h,
     c: r.c ?? "",
     b: r.b ?? "",
+    st: r.st ?? "doctrine",
+    ac: r.ac ?? "public",
   }));
 }

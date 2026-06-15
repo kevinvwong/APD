@@ -8,7 +8,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/db";
-import { conversations, messages, fieldManuals } from "@/db/schema";
+import { conversations, messages, sources } from "@/db/schema";
 import { and, eq, desc, sql } from "drizzle-orm";
 
 export const runtime = "nodejs";
@@ -26,13 +26,13 @@ export async function GET() {
       sources: messages.sources,
       created_at: messages.created_at,
       fm_id: conversations.fm_id,
-      fm_number: fieldManuals.fm_number,
-      fm_title: fieldManuals.title,
+      fm_number: sources.fm_number,
+      fm_title: sources.title,
       conversation_title: conversations.title,
     })
     .from(messages)
     .innerJoin(conversations, eq(messages.conversation_id, conversations.id))
-    .leftJoin(fieldManuals, eq(conversations.fm_id, fieldManuals.id))
+    .leftJoin(sources, eq(conversations.fm_id, sources.id))
     .where(
       and(
         eq(conversations.user_id, userId),

@@ -33,10 +33,11 @@ async function getSources(
   question: string,
   k: number,
   restrictFm: number | null,
+  includePrivate: boolean,
 ): Promise<Section[]> {
   return USE_PG
-    ? retrievePg(question, k, restrictFm)
-    : retrieve(question, k, restrictFm);
+    ? retrievePg(question, k, restrictFm, includePrivate)
+    : retrieve(question, k, restrictFm, includePrivate);
 }
 
 // Input bounds — keep the LLM context (and abuse surface) small and predictable.
@@ -116,7 +117,12 @@ export async function POST(req: NextRequest) {
         { status: 400 },
       );
 
-    const sources = await getSources(question, 12, fmId);
+    // Auth gates access to private sources (e.g. copyrighted books): only a
+    // signed-in caller may retrieve them. Resolve it before retrieval so the
+    // includePrivate flag reflects the real session.
+    const { userId } = await auth();
+
+    const sources = await getSources(question, 12, fmId, !!userId);
 
     // Optional resume: { conversationId } from the client lets logged-in users
     // continue a thread. Verified for ownership below.
@@ -124,13 +130,11 @@ export async function POST(req: NextRequest) {
     const requestedConvoId =
       Number.isInteger(rawConvoId) && rawConvoId > 0 ? rawConvoId : null;
 
-    const { userId } = await auth();
-
     if (!sources.length && mode === "library") {
       // Don't persist the "no results" fallback — it'd clutter conversation history
       return NextResponse.json({
         answer:
-          'I couldn\'t find anything relevant in the indexed manuals for that. Try rephrasing with doctrinal terms, or switch to "Model + Library".',
+          'I couldn\'t find anything relevant in the indexed sources for that. Try rephrasing with doctrinal terms, or switch to "Model + Library".',
         sources: [],
       });
     }

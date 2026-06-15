@@ -9,7 +9,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/db";
-import { userBookmarks, fieldManuals } from "@/db/schema";
+import { userBookmarks, sources } from "@/db/schema";
 import { and, eq, sql } from "drizzle-orm";
 
 export const runtime = "nodejs";
@@ -26,11 +26,11 @@ export async function GET() {
       anchor: userBookmarks.anchor,
       note: userBookmarks.note,
       created_at: userBookmarks.created_at,
-      fm_number: fieldManuals.fm_number,
-      fm_title: fieldManuals.title,
+      fm_number: sources.fm_number,
+      fm_title: sources.title,
     })
     .from(userBookmarks)
-    .leftJoin(fieldManuals, eq(userBookmarks.fm_id, fieldManuals.id))
+    .leftJoin(sources, eq(userBookmarks.fm_id, sources.id))
     .where(eq(userBookmarks.user_id, userId))
     .orderBy(sql`${userBookmarks.created_at} DESC`);
 

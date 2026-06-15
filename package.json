@@ -11,6 +11,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:seed": "npx tsx src/db/seed.ts",
+    "book:ingest": "tsx scripts/ingest-book.ts",
     "search:index": "tsx scripts/build-search-index.ts",
     "index:db": "tsx scripts/index-sections-to-db.ts",
     "figures:extract": "python scripts/extract-figures.py",

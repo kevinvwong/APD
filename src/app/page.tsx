@@ -4,7 +4,7 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/db";
-import { fieldManuals } from "@/db/schema";
+import { sources } from "@/db/schema";
 import { CatalogClient } from "@/components/CatalogClient";
 import { LandingClient } from "@/components/LandingClient";
 
@@ -19,13 +19,13 @@ export default async function Home() {
 
   const fms = await db
     .select({
-      id: fieldManuals.id,
-      fm_number: fieldManuals.fm_number,
-      title: fieldManuals.title,
-      word_count: fieldManuals.word_count,
+      id: sources.id,
+      fm_number: sources.fm_number,
+      title: sources.title,
+      word_count: sources.word_count,
     })
-    .from(fieldManuals)
-    .orderBy(fieldManuals.fm_number);
+    .from(sources)
+    .orderBy(sources.fm_number);
 
   return <CatalogClient fms={fms} />;
 }
