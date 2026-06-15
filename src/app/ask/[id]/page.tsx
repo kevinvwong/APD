@@ -2,7 +2,7 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { db } from "@/db";
-import { fieldManuals } from "@/db/schema";
+import { sources } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { AskPageClient } from "@/components/AskPageClient";
 
@@ -20,12 +20,12 @@ export default async function AskFmPage({
 
   const [fm] = await db
     .select({
-      id: fieldManuals.id,
-      fm_number: fieldManuals.fm_number,
-      title: fieldManuals.title,
+      id: sources.id,
+      fm_number: sources.fm_number,
+      title: sources.title,
     })
-    .from(fieldManuals)
-    .where(eq(fieldManuals.id, numId));
+    .from(sources)
+    .where(eq(sources.id, numId));
 
   if (!fm) notFound();
 

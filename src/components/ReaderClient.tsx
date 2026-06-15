@@ -11,6 +11,11 @@ export interface FmMeta {
   fm_number: string;
   title: string;
   word_count: number;
+  /** 'doctrine' | 'book' — undefined/null is treated as doctrine/FM */
+  source_type?: string | null;
+  author?: string | null;
+  /** Full attribution string (includes license) for book sources */
+  citation?: string | null;
 }
 
 export interface Highlight {
@@ -439,6 +444,20 @@ export function ReaderClient({
                     ‹ {fm.fm_number}
                   </Link>
                   <div className="doc-title">{fm.title}</div>
+                  {fm.source_type === "book" && (fm.citation || fm.author) && (
+                    <div
+                      className="doc-attribution"
+                      style={{
+                        marginTop: 2,
+                        fontSize: 11,
+                        lineHeight: 1.4,
+                        color: "var(--mute)",
+                        maxWidth: "62ch",
+                      }}
+                    >
+                      {fm.citation || fm.author}
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="doc-side">

@@ -13,6 +13,8 @@ export interface Section {
   h: string;
   c: string;
   b: string;
+  st?: string; // source_type: "doctrine" | "book". Absent in older indexes => doctrine.
+  ac?: string; // access: "public" | "private". Absent in older indexes => public.
 }
 
 let CACHE: Section[] | null = null;
@@ -38,11 +40,18 @@ export function terms(q: string): string[] {
   );
 }
 
-/** Top-k relevant sections for a natural-language question. */
+/**
+ * Top-k relevant sections for a natural-language question.
+ *
+ * Private sources (ac === "private", e.g. copyrighted books) are excluded
+ * unless `includePrivate` is true — the caller passes that only for an
+ * authenticated request, so book content never leaks to anonymous callers.
+ */
 export function retrieve(
   question: string,
   k = 8,
   restrictFm?: number | null,
+  includePrivate = false,
 ): Section[] {
   const ix = index();
   const ts = terms(question);
@@ -51,6 +60,7 @@ export function retrieve(
   const scored: { s: Section; score: number }[] = [];
   for (const s of ix) {
     if (restrictFm != null && s.f !== restrictFm) continue;
+    if (!includePrivate && s.ac === "private") continue;
     const hLow = s.h.toLowerCase();
     const cLow = s.c ? s.c.toLowerCase() : "";
     const bLow = s.b.toLowerCase();

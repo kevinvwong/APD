@@ -1,0 +1,86 @@
+{
+  "_comment": "Curated open-license organization/management theory corpus for APD. Each entry ingests as one `book` source. `access` is 'public' because every title here is public-domain or openly (CC) licensed and therefore redistributable; `license` records the exact terms (attribution is carried into the DB via `citation`). `fetch` describes how scripts/ingest-books.ts obtains the text: 'auto' = downloaded + converted by the script from `url`; 'manual' = multi-page source you download via the official export and convert with pdf_to_md.py into books/<id>.md before running the ingest.",
+  "books": [
+    {
+      "id": "taylor-scientific-management",
+      "title": "The Principles of Scientific Management",
+      "ref": "Taylor 1911",
+      "author": "Frederick Winslow Taylor",
+      "citation": "Taylor, F. W. (1911). The Principles of Scientific Management. Harper & Brothers. Public domain.",
+      "access": "public",
+      "license": "Public Domain (US)",
+      "fetch": "gutenberg-txt",
+      "url": "https://www.gutenberg.org/cache/epub/6435/pg6435.txt"
+    },
+    {
+      "id": "follett-the-new-state",
+      "title": "The New State: Group Organization the Solution of Popular Government",
+      "ref": "Follett 1918",
+      "author": "Mary Parker Follett",
+      "citation": "Follett, M. P. (1918). The New State: Group Organization the Solution of Popular Government. Longmans, Green and Co. Public domain.",
+      "access": "public",
+      "license": "Public Domain (US)",
+      "fetch": "html",
+      "url": "https://standardebooks.org/ebooks/mary-parker-follett/the-new-state/text/single-page"
+    },
+    {
+      "id": "follett-creative-experience",
+      "title": "Creative Experience",
+      "ref": "Follett 1924",
+      "author": "Mary Parker Follett",
+      "citation": "Follett, M. P. (1924). Creative Experience. Longmans, Green and Co. Public domain.",
+      "access": "public",
+      "license": "Public Domain (US)",
+      "fetch": "text",
+      "url": "https://archive.org/download/creativeexperien00foll/creativeexperien00foll_djvu.txt"
+    },
+    {
+      "id": "openstax-organizational-behavior",
+      "title": "Organizational Behavior",
+      "ref": "OpenStax OB 2019",
+      "author": "J. Stewart Black; David S. Bright; Donald G. Gardner; et al.",
+      "citation": "Black, J. S., Bright, D. S., & Gardner, D. G., et al. (2019). Organizational Behavior. OpenStax, Rice University. Licensed under CC BY 4.0.",
+      "access": "public",
+      "license": "CC BY 4.0",
+      "fetch": "manual",
+      "url": "https://openstax.org/details/books/organizational-behavior",
+      "note": "Download the official PDF from the OpenStax page, then: python pdf_to_md.py (or any heading-preserving converter) -> books/openstax-organizational-behavior.md"
+    },
+    {
+      "id": "openstax-principles-of-management",
+      "title": "Principles of Management",
+      "ref": "OpenStax PoM 2019",
+      "author": "David S. Bright; Anastasia H. Cortes; et al.",
+      "citation": "Bright, D. S., & Cortes, A. H., et al. (2019). Principles of Management. OpenStax, Rice University. Licensed under CC BY 4.0.",
+      "access": "public",
+      "license": "CC BY 4.0",
+      "fetch": "manual",
+      "url": "https://openstax.org/details/books/principles-management/",
+      "note": "Download the official PDF from the OpenStax page, then convert -> books/openstax-principles-of-management.md"
+    },
+    {
+      "id": "bauer-erdogan-organizational-behavior",
+      "title": "Organizational Behavior",
+      "ref": "Bauer & Erdogan 2010",
+      "author": "Talya Bauer; Berrin Erdogan",
+      "citation": "Bauer, T., & Erdogan, B. (2010). Organizational Behavior. Saylor Foundation / University of Minnesota Libraries Publishing. Licensed under CC BY-NC-SA 3.0.",
+      "access": "public",
+      "license": "CC BY-NC-SA 3.0",
+      "fetch": "manual",
+      "url": "https://open.lib.umn.edu/organizationalbehavior/",
+      "note": "Download the PDF/EPUB export from the Pressbooks site, then convert -> books/bauer-erdogan-organizational-behavior.md. NonCommercial license."
+    },
+    {
+      "id": "renfro-public-administration-essentials",
+      "title": "Public Administration: The Essentials",
+      "ref": "Renfro (1st ed.)",
+      "author": "Jayme L. Renfro",
+      "citation": "Renfro, J. L. Public Administration: The Essentials (1st ed.). University of Northern Iowa. Licensed under CC BY-NC-SA 4.0.",
+      "access": "public",
+      "license": "CC BY-NC-SA 4.0",
+      "fetch": "manual",
+      "url": "https://open.umn.edu/opentextbooks/textbooks/1558",
+      "note": "Download the PDF from the Open Textbook Library record, then convert -> books/renfro-public-administration-essentials.md. NonCommercial license."
+    }
+  ]
+}

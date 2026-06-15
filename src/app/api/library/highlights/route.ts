@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/db";
-import { userHighlights, fieldManuals } from "@/db/schema";
+import { userHighlights, sources } from "@/db/schema";
 import { and, eq, sql } from "drizzle-orm";
 
 export const runtime = "nodejs";
@@ -38,11 +38,11 @@ export async function GET(req: NextRequest) {
       note: userHighlights.note,
       color: userHighlights.color,
       created_at: userHighlights.created_at,
-      fm_number: fieldManuals.fm_number,
-      fm_title: fieldManuals.title,
+      fm_number: sources.fm_number,
+      fm_title: sources.title,
     })
     .from(userHighlights)
-    .leftJoin(fieldManuals, eq(userHighlights.fm_id, fieldManuals.id))
+    .leftJoin(sources, eq(userHighlights.fm_id, sources.id))
     .where(where)
     .orderBy(sql`${userHighlights.created_at} DESC`)
     .limit(500);

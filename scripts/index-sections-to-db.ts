@@ -15,7 +15,7 @@ config({ path: ".env.local" });
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
 import { sql } from "drizzle-orm";
-import { fieldManuals, fmSections } from "../src/db/schema";
+import { sources, fmSections } from "../src/db/schema";
 import { parseFM } from "../src/lib/fm-parse";
 
 const db = drizzle(neon(process.env.DATABASE_URL!), {});
@@ -38,17 +38,21 @@ interface SectionRow {
   body: string;
   fm_number: string;
   fm_title: string;
+  source_type: string;
+  access: string;
 }
 
 async function main() {
   const rows = await db
     .select({
-      id: fieldManuals.id,
-      fm_number: fieldManuals.fm_number,
-      title: fieldManuals.title,
-      content: fieldManuals.content,
+      id: sources.id,
+      fm_number: sources.fm_number,
+      title: sources.title,
+      content: sources.content,
+      source_type: sources.source_type,
+      access: sources.access,
     })
-    .from(fieldManuals);
+    .from(sources);
 
   const sections: SectionRow[] = [];
   for (const fm of rows) {
@@ -91,6 +95,8 @@ async function main() {
         body,
         fm_number: fm.fm_number,
         fm_title: fm.title,
+        source_type: fm.source_type,
+        access: fm.access,
       });
     }
   }

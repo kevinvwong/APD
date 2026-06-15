@@ -4,7 +4,7 @@ import fs from "fs";
 import path from "path";
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
-import { fieldManuals } from "./schema";
+import { sources } from "./schema";
 import { sql } from "drizzle-orm";
 
 const db = drizzle(neon(process.env.DATABASE_URL!), {});
@@ -53,7 +53,7 @@ async function main() {
   console.log(`Seeding ${files.length} Field Manuals into Neon...`);
 
   // Clear existing rows
-  await db.execute(sql`TRUNCATE field_manuals RESTART IDENTITY`);
+  await db.execute(sql`TRUNCATE sources RESTART IDENTITY`);
 
   let inserted = 0;
   for (const file of files) {
@@ -63,7 +63,7 @@ async function main() {
     const char_count = content.length;
     const word_count = content.split(/\s+/).filter(Boolean).length;
 
-    await db.insert(fieldManuals).values({
+    await db.insert(sources).values({
       fm_number,
       title,
       filename: path.basename(file, ".md"),
