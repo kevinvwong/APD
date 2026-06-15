@@ -43,6 +43,7 @@ export async function retrieve(
   k = 8,
   restrictFm?: number | null,
   includePrivate = false,
+  scope: "all" | "doctrine" | "book" = "all",
 ): Promise<Section[]> {
   const q = question.trim();
   if (!q) return [];
@@ -60,6 +61,10 @@ export async function retrieve(
   // authenticated, mirroring the JSON path's includePrivate behaviour.
   const accessFilter = includePrivate ? sql`` : sql`AND access = 'public'`;
 
+  // Restrict to one corpus when scope !== "all", mirroring the JSON path.
+  const scopeFilter =
+    scope === "all" ? sql`` : sql`AND source_type = ${scope}`;
+
   const rows = await db.execute<SectionRow>(sql`
     SELECT
       fm_id        AS f,
@@ -75,6 +80,7 @@ export async function retrieve(
     WHERE fts @@ ${tsquery}
     ${fmFilter}
     ${accessFilter}
+    ${scopeFilter}
     ORDER BY ts_rank(fts, ${tsquery}) DESC
     LIMIT ${k}
   `);

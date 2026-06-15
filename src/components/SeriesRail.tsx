@@ -10,13 +10,14 @@ export const SERIES_MAP: Record<number, string> = {
   7: "Training & Readiness",
 };
 
-export type Scope = 0 | "bm" | "rc" | number;
+export type Scope = 0 | "bm" | "rc" | "ref" | number;
 
 interface SeriesRailProps {
   scope: Scope;
   totalCount: number;
   bookmarkCount: number;
   recentCount: number;
+  bookCount: number;
   seriesCounts: Record<number, number>;
   railOpen: boolean;
   onSetScope: (s: Scope) => void;
@@ -27,6 +28,7 @@ export function SeriesRail({
   totalCount,
   bookmarkCount,
   recentCount,
+  bookCount,
   seriesCounts,
   railOpen,
   onSetScope,
@@ -65,6 +67,19 @@ export function SeriesRail({
         <span className="rail-name">Recently Read</span>
         <span className="rail-count">{recentCount}</span>
       </div>
+
+      {bookCount > 0 && (
+        <div
+          className={"rail-item" + (scope === "ref" ? " on" : "")}
+          onClick={() => onSetScope("ref")}
+        >
+          <span className="rail-num" style={{ fontSize: 13 }}>
+            ❧
+          </span>
+          <span className="rail-name">Reference Library</span>
+          <span className="rail-count">{bookCount}</span>
+        </div>
+      )}
 
       <div className="rail-h" style={{ paddingTop: 18 }}>
         Doctrinal Series

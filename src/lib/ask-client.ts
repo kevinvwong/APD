@@ -2,6 +2,8 @@
 // Client-side wrapper for the doctrine assistant. Use from a "use client" component.
 
 export type AskMode = "library" | "open";
+/** Which corpus the library retrieval should draw from. */
+export type AskScope = "all" | "doctrine" | "book";
 export interface AskSource {
   f: number;
   n: string;
@@ -9,6 +11,8 @@ export interface AskSource {
   a: string;
   h: string;
   c: string;
+  /** "doctrine" | "book" — lets the UI badge a cited source by type */
+  st?: string;
 }
 export interface AskResult {
   answer: string;
@@ -26,6 +30,7 @@ export interface ChatTurn {
 export async function askLibrary(opts: {
   question: string;
   mode?: AskMode;
+  scope?: AskScope;
   fmId?: number | null;
   history?: ChatTurn[];
   conversationId?: number | null;
@@ -37,6 +42,7 @@ export async function askLibrary(opts: {
     body: JSON.stringify({
       question: opts.question,
       mode: opts.mode || "library",
+      scope: opts.scope || "all",
       fmId: opts.fmId ?? null,
       history: opts.history || [],
       conversationId: opts.conversationId ?? null,
