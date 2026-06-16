@@ -169,6 +169,12 @@ export function CatalogClient({ fms }: CatalogClientProps) {
 
   const bmSet = useMemo(() => new Set(bookmarks), [bookmarks]);
 
+  // Count of reference-library (book) sources, for the rail entry.
+  const bookCount = useMemo(
+    () => enriched.filter((f) => f.source_type === "book").length,
+    [enriched],
+  );
+
   // Series counts for the rail
   const seriesCounts = useMemo(() => {
     const counts: Record<number, number> = {};
@@ -190,6 +196,8 @@ export function CatalogClient({ fms }: CatalogClientProps) {
       return recents
         .map((id) => enriched.find((f) => f.id === id))
         .filter(Boolean) as typeof enriched;
+    if (scope === "ref")
+      return enriched.filter((f) => f.source_type === "book");
     if (typeof scope === "number" && scope > 0)
       return enriched.filter((f) => f.series === scope);
     return enriched;
@@ -214,21 +222,52 @@ export function CatalogClient({ fms }: CatalogClientProps) {
     return r;
   }, [q, scopedFms, sort]);
 
-  // Groups for number sort (series headers)
-  const groups = useMemo(() => {
-    if (sort !== "number" || scope === "bm" || scope === "rc") {
-      return [{ s: 0, name: null, items: manualMatches }];
+  // Groups: doctrinal series headers (number sort) plus a trailing Reference
+  // Library group for book sources. Books carry series 0, so without this split
+  // they would not surface under the "By Number" series headers at all.
+  type Group = {
+    key: string;
+    s: number;
+    name: string | null;
+    ref: boolean;
+    items: typeof manualMatches;
+  };
+  const groups = useMemo<Group[]>(() => {
+    // User-curated lists render as a single combined group.
+    if (scope === "bm" || scope === "rc") {
+      return [{ key: "all", s: 0, name: null, ref: false, items: manualMatches }];
     }
-    return Object.keys(SERIES_MAP)
+    // Dedicated reference scope: one Reference Library group.
+    if (scope === "ref") {
+      return [{ key: "ref", s: 0, name: null, ref: true, items: manualMatches }];
+    }
+
+    const books = manualMatches.filter((f) => f.source_type === "book");
+    const fmsOnly = manualMatches.filter((f) => f.source_type !== "book");
+    const refGroup: Group[] = books.length
+      ? [{ key: "ref", s: 0, name: null, ref: true, items: books }]
+      : [];
+
+    if (sort !== "number") {
+      const fmGroup: Group[] = fmsOnly.length
+        ? [{ key: "fm", s: 0, name: null, ref: false, items: fmsOnly }]
+        : [];
+      return [...fmGroup, ...refGroup];
+    }
+
+    const seriesGroups: Group[] = Object.keys(SERIES_MAP)
       .map((k) => {
         const num = Number(k);
         return {
+          key: `s${num}`,
           s: num,
           name: SERIES_MAP[num],
-          items: manualMatches.filter((f) => f.series === num),
+          ref: false,
+          items: fmsOnly.filter((f) => f.series === num),
         };
       })
       .filter((g) => g.items.length);
+    return [...seriesGroups, ...refGroup];
   }, [manualMatches, sort, scope]);
 
   // Scope setter that also resets rail drawer and scroll position
@@ -345,6 +384,7 @@ export function CatalogClient({ fms }: CatalogClientProps) {
           totalCount={fms.length}
           bookmarkCount={bookmarks.length}
           recentCount={recents.length}
+          bookCount={bookCount}
           seriesCounts={seriesCounts}
           railOpen={railOpen}
           onSetScope={setScopeReset}
@@ -390,13 +430,23 @@ export function CatalogClient({ fms }: CatalogClientProps) {
               )}
 
               {groups.map((g) => (
-                <div key={g.s}>
-                  {g.name && (
+                <div key={g.key}>
+                  {g.ref ? (
                     <div className="group-h">
-                      <span className="group-series">{g.s}00 Series</span>
-                      <span className="group-name">{g.name}</span>
+                      <span className="group-series">Reference Library</span>
+                      <span className="group-name">
+                        organization &amp; management theory
+                      </span>
                       <span className="group-rule" />
                     </div>
+                  ) : (
+                    g.name && (
+                      <div className="group-h">
+                        <span className="group-series">{g.s}00 Series</span>
+                        <span className="group-name">{g.name}</span>
+                        <span className="group-rule" />
+                      </div>
+                    )
                   )}
                   {g.items.map((it) => {
                     const isBook = it.source_type === "book";
@@ -433,7 +483,9 @@ export function CatalogClient({ fms }: CatalogClientProps) {
                 ? "No bookmarks yet — tap ☆ on any manual."
                 : scope === "rc"
                   ? "Nothing read yet."
-                  : "Nothing here."}
+                  : scope === "ref"
+                    ? "No reference works yet — ingest the open-license corpus."
+                    : "Nothing here."}
             </div>
           )}
 

@@ -40,18 +40,24 @@ export function terms(q: string): string[] {
   );
 }
 
+export type RetrieveScope = "all" | "doctrine" | "book";
+
 /**
  * Top-k relevant sections for a natural-language question.
  *
  * Private sources (ac === "private", e.g. copyrighted books) are excluded
  * unless `includePrivate` is true — the caller passes that only for an
  * authenticated request, so book content never leaks to anonymous callers.
+ *
+ * `scope` restricts retrieval to one corpus: "doctrine" (Field Manuals),
+ * "book" (reference works), or "all" (default).
  */
 export function retrieve(
   question: string,
   k = 8,
   restrictFm?: number | null,
   includePrivate = false,
+  scope: RetrieveScope = "all",
 ): Section[] {
   const ix = index();
   const ts = terms(question);
@@ -61,6 +67,8 @@ export function retrieve(
   for (const s of ix) {
     if (restrictFm != null && s.f !== restrictFm) continue;
     if (!includePrivate && s.ac === "private") continue;
+    // Absent st in older indexes means doctrine/FM.
+    if (scope !== "all" && (s.st ?? "doctrine") !== scope) continue;
     const hLow = s.h.toLowerCase();
     const cLow = s.c ? s.c.toLowerCase() : "";
     const bLow = s.b.toLowerCase();

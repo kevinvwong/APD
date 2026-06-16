@@ -13,6 +13,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - **Generalized corpus model** — the FM-only `field_manuals` table is now a neutral `sources` table (`source_type`: `doctrine` | `book`; `access`: `public` | `private`; plus `author` / `citation` for books). Lets the library hold curated reference works — e.g. organization-theory texts — alongside the public-domain Field Manuals. Migration `drizzle/0001_sources_generalize.sql` is non-breaking: the FK columns stay named `fm_id`, the `/fm/[id]` reader URL is unchanged, and existing rows default to public doctrine.
 - **Private-source gating** — retrieval (`src/lib/retrieve.ts` + the Postgres path) excludes `access = "private"` sources unless the Ask request is authenticated, so in-copyright book content is only ever served to signed-in users.
 - **Book ingestion** — `npm run book:ingest` (`scripts/ingest-book.ts`) ingests a single Markdown-converted reference work as a private `book` source. Books are not bundled (copyright); supply your own licensed Markdown.
+- **Reference Library + Ask scope** — the catalog now splits doctrinal series from a dedicated "Reference Library" section (with a rail filter), so book sources surface properly instead of being dropped from the by-number series view. The library-wide Ask gains an All / Field Manuals / Reference corpus scope (threaded through both retrieval paths), and cited book sources get a "Book" tag.
 
 ## [0.1.0] — 2026-06-10
 

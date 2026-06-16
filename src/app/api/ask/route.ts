@@ -29,15 +29,18 @@ const MODEL = process.env.ANTHROPIC_MODEL || "claude-haiku-4-5";
 // (question, k, restrictFm) -> Section[] contract; retrievePg is async.
 const USE_PG = process.env.RETRIEVE_BACKEND === "pg";
 
+type Scope = "all" | "doctrine" | "book";
+
 async function getSources(
   question: string,
   k: number,
   restrictFm: number | null,
   includePrivate: boolean,
+  scope: Scope,
 ): Promise<Section[]> {
   return USE_PG
-    ? retrievePg(question, k, restrictFm, includePrivate)
-    : retrieve(question, k, restrictFm, includePrivate);
+    ? retrievePg(question, k, restrictFm, includePrivate, scope)
+    : retrieve(question, k, restrictFm, includePrivate, scope);
 }
 
 // Input bounds — keep the LLM context (and abuse surface) small and predictable.
@@ -81,6 +84,10 @@ export async function POST(req: NextRequest) {
     // mode must be exactly one of the known values; anything else -> "library".
     const mode: AskMode = body.mode === "open" ? "open" : "library";
 
+    // scope restricts retrieval to one corpus; anything else -> "all".
+    const scope: Scope =
+      body.scope === "doctrine" || body.scope === "book" ? body.scope : "all";
+
     // fmId: accept only a positive, in-range integer; otherwise treat as "no filter".
     let fmId: number | null = null;
     if (body.fmId !== null && body.fmId !== undefined && body.fmId !== "") {
@@ -122,7 +129,7 @@ export async function POST(req: NextRequest) {
     // includePrivate flag reflects the real session.
     const { userId } = await auth();
 
-    const sources = await getSources(question, 12, fmId, !!userId);
+    const sources = await getSources(question, 12, fmId, !!userId, scope);
 
     // Optional resume: { conversationId } from the client lets logged-in users
     // continue a thread. Verified for ownership below.
@@ -157,6 +164,7 @@ export async function POST(req: NextRequest) {
       a: s.a,
       h: s.h,
       c: s.c,
+      st: s.st ?? "doctrine",
     }));
 
     // Persist to user's library if signed in

@@ -8,6 +8,7 @@ import {
   setMessageStar,
   type AskResult,
   type AskMode,
+  type AskScope,
   type AskSource,
   type ChatTurn,
 } from "@/lib/ask-client";
@@ -257,6 +258,15 @@ export function AskPageClient({ fmId, fm }: Props) {
       return "library";
     }
   });
+  // Corpus scope is only meaningful for the library-wide ask (no single-FM
+  // restriction). Persisted like mode.
+  const [scope, setScope] = useState<AskScope>(() => {
+    try {
+      return (localStorage.getItem("apd_ask_scope") as AskScope) || "all";
+    } catch {
+      return "all";
+    }
+  });
   const threadRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -267,6 +277,13 @@ export function AskPageClient({ fmId, fm }: Props) {
       localStorage.setItem("apd_ask_mode", mode);
     } catch {}
   }, [mode]);
+
+  // Persist scope to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem("apd_ask_scope", scope);
+    } catch {}
+  }, [scope]);
 
   // Load conversation history when arriving with ?conversation=N
   useEffect(() => {
@@ -350,11 +367,22 @@ export function AskPageClient({ fmId, fm }: Props) {
     setInput("");
     setBusy(true);
 
+    // Corpus scope only applies to the library-wide ask; a single-FM ask is
+    // already restricted to that manual.
+    const effectiveScope: AskScope = fmId ? "all" : scope;
+
     try {
-      setPhase("Searching 51 manuals…");
+      setPhase(
+        effectiveScope === "book"
+          ? "Searching the reference library…"
+          : effectiveScope === "doctrine"
+            ? "Searching the field manuals…"
+            : "Searching the library…",
+      );
       const result: AskResult = await askLibrary({
         question,
         mode,
+        scope: effectiveScope,
         fmId,
         history,
         conversationId,
@@ -535,7 +563,12 @@ export function AskPageClient({ fmId, fm }: Props) {
                         }}
                       >
                         <span className="source-n">{idx + 1}</span>
-                        <span className="source-num">{s.n}</span>
+                        <span className="source-num">
+                          {s.n}
+                          {s.st === "book" && (
+                            <span className="src-tag">Book</span>
+                          )}
+                        </span>
                         <span className="source-h">
                           {s.c ? s.c + " › " : ""}
                           {s.h}
@@ -579,6 +612,29 @@ export function AskPageClient({ fmId, fm }: Props) {
               ✦ Model + Library
             </button>
           </div>
+          {/* Corpus scope — only for the library-wide ask */}
+          {!fmId && (
+            <>
+              <span className="ask-mode-label">Search</span>
+              <div className="seg">
+                {(
+                  [
+                    ["all", "All"],
+                    ["doctrine", "Field Manuals"],
+                    ["book", "Reference"],
+                  ] as [AskScope, string][]
+                ).map(([val, label]) => (
+                  <button
+                    key={val}
+                    className={scope === val ? "on" : ""}
+                    onClick={() => setScope(val)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </div>
         <div className="ask-input-inner">
           <textarea
