@@ -26,7 +26,17 @@ Useful flags:
 ```bash
 npm run books:ingest-all -- --only taylor-scientific-management
 npm run books:ingest-all -- --no-fetch   # ingest only books/<id>.md already on disk
+npm run books:ingest-all -- --dry-run    # fetch + convert to books/<id>.md, no DB write
 ```
+
+`--dry-run` needs neither a database nor any env — use it to preview the
+fetched/converted Markdown (and eyeball conversion quality) before committing to
+an ingest. Fetches have a timeout + one retry and reject suspiciously short
+output (an error page won't be silently stored).
+
+After (re)building the index, `npm run check:index` validates that
+`src/data/search-index.json` is present, parseable, and well-formed. CI runs it
+on every PR so a missing or corrupt index can't ship.
 
 ## The corpus (`manifest.json`)
 

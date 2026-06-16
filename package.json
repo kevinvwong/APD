@@ -15,6 +15,7 @@
     "book:ingest": "tsx scripts/ingest-book.ts",
     "books:ingest-all": "tsx scripts/ingest-books.ts",
     "search:index": "tsx scripts/build-search-index.ts",
+    "check:index": "tsx scripts/check-index-fresh.ts",
     "index:db": "tsx scripts/index-sections-to-db.ts",
     "figures:extract": "python scripts/extract-figures.py",
     "figures:upload": "tsx scripts/upload-figures.ts"

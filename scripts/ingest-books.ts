@@ -16,6 +16,7 @@
 //   npm run books:ingest-all                 # fetch (if needed) + ingest every entry
 //   npm run books:ingest-all -- --only taylor-scientific-management
 //   npm run books:ingest-all -- --no-fetch   # ingest only books/<id>.md already on disk
+//   npm run books:ingest-all -- --dry-run    # fetch + convert to books/<id>.md, no DB write
 //
 // After ingesting, rebuild the retrieval index:
 //   npm run search:index                     # JSON path (default)
@@ -38,8 +39,17 @@ import {
   plainTextToMarkdown,
 } from "./book-convert";
 
-const db = drizzle(neon(process.env.DATABASE_URL!), {});
 const BOOKS_DIR = path.join(process.cwd(), "books");
+
+// Lazily connect — so `--dry-run` (fetch + convert only) works without a DB.
+let _db: ReturnType<typeof drizzle> | null = null;
+function getDb(): ReturnType<typeof drizzle> {
+  if (!_db) {
+    if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is not set");
+    _db = drizzle(neon(process.env.DATABASE_URL), {});
+  }
+  return _db;
+}
 
 interface Book {
   id: string;
@@ -62,31 +72,65 @@ function flagValue(name: string): string | undefined {
   return i >= 0 ? process.argv[i + 1] : undefined;
 }
 
+const FETCH_TIMEOUT_MS = 30_000;
+const MIN_CONTENT_CHARS = 500; // guard against an error page / empty body
+
+/** Fetch text with a timeout and one retry — networks and mirrors are flaky. */
+async function fetchText(url: string): Promise<string> {
+  let lastErr: unknown;
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
+    try {
+      const res = await fetch(url, {
+        headers: { "User-Agent": "APD-book-ingest/1.0" },
+        signal: ctrl.signal,
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return await res.text();
+    } catch (e) {
+      lastErr = e;
+      if (attempt < 2) await new Promise((r) => setTimeout(r, 1500 * attempt));
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  throw new Error(
+    `fetch failed for ${url}: ${(lastErr as Error)?.message ?? String(lastErr)}`,
+  );
+}
+
 async function fetchToMarkdown(book: Book): Promise<string> {
   if (!book.url) throw new Error(`No url for ${book.id}`);
-  const res = await fetch(book.url, {
-    headers: { "User-Agent": "APD-book-ingest/1.0" },
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status} fetching ${book.url}`);
-  const raw = await res.text();
+  const raw = await fetchText(book.url);
   const heading = `# ${book.title}\n\n`;
+  let md: string;
   switch (book.fetch) {
     case "gutenberg-txt":
-      return heading + plainTextToMarkdown(stripGutenberg(raw));
+      md = heading + plainTextToMarkdown(stripGutenberg(raw));
+      break;
     case "html":
-      return heading + htmlToMarkdown(raw);
+      md = heading + htmlToMarkdown(raw);
+      break;
     case "text":
-      return heading + plainTextToMarkdown(raw);
+      md = heading + plainTextToMarkdown(raw);
+      break;
     default:
       throw new Error(`Cannot auto-fetch fetch="${book.fetch}" for ${book.id}`);
   }
+  if (md.replace(/\s+/g, "").length < MIN_CONTENT_CHARS) {
+    throw new Error(
+      `converted content suspiciously short (${md.length} chars) — verify the source URL/format`,
+    );
+  }
+  return md;
 }
 
 async function ingest(book: Book, content: string): Promise<void> {
   const char_count = content.length;
   const word_count = content.split(/\s+/).filter(Boolean).length;
   const access = book.access === "private" ? "private" : "public";
-  await db
+  await getDb()
     .insert(sources)
     .values({
       fm_number: book.ref,
@@ -126,6 +170,7 @@ async function main() {
   };
   const only = flagValue("only");
   const noFetch = hasFlag("no-fetch");
+  const dryRun = hasFlag("dry-run"); // fetch + convert to books/<id>.md, no DB write
   const list = only ? manifest.books.filter((b) => b.id === only) : manifest.books;
   if (!list.length) {
     console.error(only ? `No manifest entry with id "${only}".` : "Manifest is empty.");
@@ -133,6 +178,7 @@ async function main() {
   }
 
   let ingested = 0;
+  let prepared = 0;
   const skipped: string[] = [];
   for (const book of list) {
     const mdPath = path.join(BOOKS_DIR, `${book.id}.md`);
@@ -162,11 +208,25 @@ async function main() {
       );
       continue;
     }
+
+    if (dryRun) {
+      const words = content.split(/\s+/).filter(Boolean).length;
+      console.log(
+        `  ⓘ [dry-run] ${book.ref} — "${book.title}" ready at books/${book.id}.md (${words.toLocaleString()} words)`,
+      );
+      prepared++;
+      continue;
+    }
+
     await ingest(book, content);
     ingested++;
   }
 
-  console.log(`\nDone. ${ingested} book(s) ingested.`);
+  if (dryRun) {
+    console.log(`\n[dry-run] Prepared ${prepared} book(s) — no database writes.`);
+  } else {
+    console.log(`\nDone. ${ingested} book(s) ingested.`);
+  }
   if (skipped.length) {
     console.log(`Skipped (need books/<id>.md): ${skipped.join(", ")}`);
   }
