@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "tsx scripts/migrate-on-deploy.ts && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "test": "tsx --test scripts/*.test.ts src/lib/*.test.ts",
