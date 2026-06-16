@@ -21,7 +21,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Fixed
 
 - **Resilient retrieval backend** — `/api/ask` falls back to the always-available JSON backend if the `pg`/`hybrid` backend throws (e.g. `fm_sections` missing) **or returns no rows** (table present but not yet populated). A misconfigured or half-set-up retrieval backend no longer takes Ask down with a 500 or silently answers "no results".
-- **Schema/code drift resilience** — the runtime JSON fallback (above) is the anti-drift safety net: a missing/empty/unmigrated table can no longer take Ask down. (An attempt to auto-run `drizzle-kit migrate` during the Vercel build was reverted — Neon's HTTP serverless driver can't run drizzle-kit's transactional migrations, which failed the production build. `scripts/migrate-on-deploy.ts` is kept for manual/opt-in use; run `npm run db:migrate` from a transaction-capable connection.)
+- **Working migrations on Neon** — `npm run db:migrate` now runs migrations programmatically over a Neon **WebSocket Pool** (`scripts/migrate.ts`), which supports the transactions Drizzle's migrator needs. `drizzle-kit migrate` failed against Neon because its HTTP serverless driver is stateless and can't do transactions (which also broke the deploy-time auto-migrate). Deploy-time migration is available again as a **safe, non-fatal, production-only opt-in** (`scripts/migrate-on-deploy.ts`) — not wired into the build by default.
+- **Schema/code drift resilience** — the runtime JSON fallback (above) remains the anti-drift safety net: a missing/empty/unmigrated table can't take Ask down regardless.
 
 ## [0.1.0] — 2026-06-10
 

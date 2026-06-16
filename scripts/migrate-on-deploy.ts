@@ -1,24 +1,20 @@
 // scripts/migrate-on-deploy.ts
 //
-// ⚠️ NOT wired into the build. `drizzle-kit migrate` wraps migrations in a
-// transaction, which Neon's HTTP serverless driver can't run during the Vercel
-// build — so this aborted every production deploy. The runtime JSON fallback
-// (src/app/api/ask/route.ts) is the anti-drift safety net instead. Kept here
-// for manual/opt-in use (`MIGRATE_ON_DEPLOY=1 tsx scripts/migrate-on-deploy.ts`);
-// to re-wire it into deploys, give drizzle a transaction-capable connection
-// (a Neon WebSocket Pool or a plain pg/postgres client for migrations).
+// Optional deploy-time migration hook. Runs the transaction-capable migrator
+// (scripts/migrate.ts, over a Neon WebSocket Pool) ONLY on Vercel production
+// builds, so schema and code can ship together. Skipped on previews, CI, and
+// local builds, where migrating the shared database on every build is wrong.
 //
-// Apply pending DB migrations as part of the build — but ONLY on Vercel
-// production builds, so schema and code ship together and can't drift. (Schema
-// drift is what caused the `relation "sources" does not exist` outage: the
-// `sources` code deployed while the rename migration was never applied.)
+// NON-FATAL by design: a migration hiccup logs loudly but never aborts the
+// build, so a transient DB issue can't freeze all deploys (which is exactly
+// what happened when the build aborted on `drizzle-kit migrate` failing).
 //
-// Skipped on previews, CI, and local builds, where running migrations against
-// the shared database on every build would be wrong. Wired into `npm run build`
-// ahead of `next build`.
+// NOT wired into `npm run build` by default. To enable deploy-time migration
+// once you've confirmed `npm run db:migrate` works against your database, set
+// the build script to: "tsx scripts/migrate-on-deploy.ts && next build".
 //
 // Overrides:
-//   MIGRATE_ON_DEPLOY=1   force migrations to run (e.g. a one-off)
+//   MIGRATE_ON_DEPLOY=1   force the migration to run (e.g. local/one-off)
 //   SKIP_MIGRATE=1        force skip
 
 import { spawnSync } from "node:child_process";
@@ -36,18 +32,21 @@ if (skip || (!force && vercelEnv !== "production")) {
 }
 
 if (!process.env.DATABASE_URL_UNPOOLED && !process.env.DATABASE_URL) {
-  console.error(
-    "[migrate-on-deploy] no DATABASE_URL(_UNPOOLED) set — cannot migrate.",
+  console.warn(
+    "[migrate-on-deploy] no DATABASE_URL(_UNPOOLED) set — skipping migrations.",
   );
-  process.exit(1);
+  process.exit(0);
 }
 
-console.log(
-  "[migrate-on-deploy] applying pending migrations (drizzle-kit migrate)…",
-);
-const res = spawnSync("npx", ["drizzle-kit", "migrate"], { stdio: "inherit" });
+console.log("[migrate-on-deploy] running migrations (scripts/migrate.ts)…");
+const res = spawnSync("npx", ["tsx", "scripts/migrate.ts"], {
+  stdio: "inherit",
+});
 if (res.status !== 0) {
-  console.error("[migrate-on-deploy] migration failed — aborting build.");
-  process.exit(res.status ?? 1);
+  // Never block a deploy on a migration failure — surface it loudly instead.
+  console.error(
+    "[migrate-on-deploy] ⚠ migrations did not complete; continuing the build. " +
+      "Run `npm run db:migrate` manually to apply them.",
+  );
 }
-console.log("[migrate-on-deploy] migrations applied.");
+process.exit(0);
