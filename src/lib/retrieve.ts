@@ -42,24 +42,30 @@ export function terms(q: string): string[] {
 
 export type RetrieveScope = "all" | "doctrine" | "book";
 
+export interface RankOpts {
+  k?: number;
+  restrictFm?: number | null;
+  includePrivate?: boolean;
+  scope?: RetrieveScope;
+}
+
 /**
- * Top-k relevant sections for a natural-language question.
+ * Pure ranking over an explicit section list — the testable core of retrieve().
+ * Separated from index() (which reads the on-disk JSON) so the scoring,
+ * private-source gating, scope filtering, and FM restriction can be unit-tested
+ * against a fixture without touching the filesystem.
  *
  * Private sources (ac === "private", e.g. copyrighted books) are excluded
- * unless `includePrivate` is true — the caller passes that only for an
- * authenticated request, so book content never leaks to anonymous callers.
- *
- * `scope` restricts retrieval to one corpus: "doctrine" (Field Manuals),
- * "book" (reference works), or "all" (default).
+ * unless `includePrivate` is true. `scope` restricts to one corpus: "doctrine"
+ * (Field Manuals), "book" (reference works), or "all" (default).
  */
-export function retrieve(
+export function rankSections(
+  ix: Section[],
   question: string,
-  k = 8,
-  restrictFm?: number | null,
-  includePrivate = false,
-  scope: RetrieveScope = "all",
+  opts: RankOpts = {},
 ): Section[] {
-  const ix = index();
+  const { k = 8, restrictFm = null, includePrivate = false, scope = "all" } =
+    opts;
   const ts = terms(question);
   if (!ts.length) return [];
   const phrase = question.trim().toLowerCase();
@@ -94,4 +100,23 @@ export function retrieve(
   }
   scored.sort((a, b) => b.score - a.score);
   return scored.slice(0, k).map((x) => x.s);
+}
+
+/**
+ * Top-k relevant sections for a natural-language question, over the prebuilt
+ * on-disk index. Thin wrapper around rankSections().
+ */
+export function retrieve(
+  question: string,
+  k = 8,
+  restrictFm?: number | null,
+  includePrivate = false,
+  scope: RetrieveScope = "all",
+): Section[] {
+  return rankSections(index(), question, {
+    k,
+    restrictFm,
+    includePrivate,
+    scope,
+  });
 }
