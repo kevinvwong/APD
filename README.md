@@ -115,6 +115,16 @@ npm run dev
 | `npm run search:index` | Rebuild keyword search index from DB |
 | `npm run db:generate`  | Generate Drizzle migration files     |
 | `npm run db:migrate`   | Run pending migrations               |
+| `npm run eval`         | Score retrieval against the gold set (recall@k / MRR) |
+
+## Retrieval evaluation
+
+`npm run eval` runs a gold question set (`eval/retrieval-gold.json`) through the
+default JSON retrieval backend and reports **recall@k**, **MRR**, and
+**section-recall** — a fast, deterministic, offline signal (no DB/LLM) for
+catching regressions and comparing scoring changes. The metric math
+(`src/lib/eval-metrics.ts`) is unit-tested. `--min-recall <x>` exits non-zero
+below a threshold, so it can gate CI; `--k <n>` sets the window.
 
 ## FM content
 
