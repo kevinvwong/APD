@@ -19,7 +19,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Fixed
 
-- **Resilient retrieval backend** — `/api/ask` now falls back to the always-available JSON backend if the `pg`/`hybrid` backend throws (e.g. `RETRIEVE_BACKEND=pg` set but `fm_sections` not created/populated). A misconfigured or unmigrated retrieval backend previously took Ask down with a 500; it now degrades gracefully.
+- **Resilient retrieval backend** — `/api/ask` falls back to the always-available JSON backend if the `pg`/`hybrid` backend throws (e.g. `fm_sections` missing) **or returns no rows** (table present but not yet populated). A misconfigured or half-set-up retrieval backend no longer takes Ask down with a 500 or silently answers "no results".
 
 ## [0.1.0] — 2026-06-10
 
