@@ -2,6 +2,8 @@
 
 A full-text library and AI research assistant for all 51 active U.S. Army Field Manuals. Ask questions in plain English, get answers cited to the exact FM section, and read the source with one click.
 
+> 📖 **Using the app?** See the [User Guide](docs/USER_GUIDE.md) for a complete walkthrough of browsing, reading, the Ask assistant, and your personal library.
+
 ## What it does
 
 - **Browse** — searchable index of all 51 active FMs sourced from [armypubs.army.mil](https://armypubs.army.mil)
