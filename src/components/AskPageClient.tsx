@@ -457,7 +457,7 @@ export function AskPageClient({ fmId, fm }: Props) {
         <div className="ask-band-sub">
           {fm
             ? `Scoped to ${fm.fm_number} · ${fm.title}`
-            : "Grounded answers drawn from 51 Field Manuals — every claim cites its source."}
+            : "Grounded answers drawn from the doctrine library — every claim cites its source."}
         </div>
       </div>
 
@@ -476,7 +476,7 @@ export function AskPageClient({ fmId, fm }: Props) {
               <div className="ask-empty-h">Research assistant</div>
               <div className="ask-empty-p">
                 Ask a doctrinal question. Answers are synthesized only from the{" "}
-                {fm ? `text of ${fm.fm_number}` : "indexed manuals"} and cite
+                {fm ? `text of ${fm.fm_number}` : "indexed library"} and cite
                 the exact sections — tap a citation to jump there.
               </div>
               <div className="ask-sugs">
