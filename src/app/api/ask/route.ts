@@ -46,10 +46,21 @@ async function getSources(
   includePrivate: boolean,
   scope: Scope,
 ): Promise<Section[]> {
-  if (BACKEND === "hybrid")
-    return retrieveHybrid(question, k, restrictFm, includePrivate, scope);
-  if (BACKEND === "pg")
-    return retrievePg(question, k, restrictFm, includePrivate, scope);
+  // The pg/hybrid backends depend on live DB state (fm_sections populated,
+  // pgvector, etc.). If that's missing or the query throws, degrade to the
+  // always-available JSON path instead of failing the whole request — a
+  // misconfigured backend should never take Ask down.
+  try {
+    if (BACKEND === "hybrid")
+      return await retrieveHybrid(question, k, restrictFm, includePrivate, scope);
+    if (BACKEND === "pg")
+      return await retrievePg(question, k, restrictFm, includePrivate, scope);
+  } catch (e) {
+    console.error(
+      `[/api/ask] "${BACKEND}" retrieval failed; falling back to json backend:`,
+      e,
+    );
+  }
   return retrieve(question, k, restrictFm, includePrivate, scope);
 }
 
