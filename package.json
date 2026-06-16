@@ -9,7 +9,7 @@
     "lint": "next lint",
     "test": "tsx --test scripts/*.test.ts src/lib/*.test.ts",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
+    "db:migrate": "tsx scripts/migrate.ts",
     "db:push": "drizzle-kit push",
     "db:seed": "npx tsx src/db/seed.ts",
     "book:ingest": "tsx scripts/ingest-book.ts",
@@ -43,9 +43,11 @@
     "remark-gfm": "^4.0.1",
     "tailwindcss": "^4.3.0",
     "tsx": "^4.22.4",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "ws": "^8.21.0"
   },
   "devDependencies": {
+    "@types/ws": "^8.18.1",
     "eslint": "^8.57.1",
     "eslint-config-next": "^15.5.19"
   }
