@@ -1707,3 +1707,129 @@ body:has(.landing) {
     font-size: 22px;
   }
 }
+
+/* ===== User guide page (/guide) ===== */
+.guide-scroll {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--paper);
+}
+.guide-doc {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 32px 24px 96px;
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 16px;
+  line-height: 1.62;
+}
+.guide-doc h1,
+.guide-doc h2,
+.guide-doc h3,
+.guide-doc h4 {
+  font-family: var(--head);
+  color: var(--ink);
+  line-height: 1.2;
+  scroll-margin-top: 16px;
+}
+.guide-doc h1 {
+  font-size: 30px;
+  margin: 8px 0 14px;
+}
+.guide-doc h2 {
+  font-size: 22px;
+  margin: 38px 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--rule);
+}
+.guide-doc h3 {
+  font-size: 17px;
+  margin: 26px 0 8px;
+}
+.guide-doc h4 {
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--mute);
+  margin: 20px 0 6px;
+}
+.guide-doc p {
+  margin: 0 0 14px;
+}
+.guide-doc a {
+  color: var(--olive-d);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.guide-doc a:hover {
+  color: var(--olive);
+}
+.guide-doc ul,
+.guide-doc ol {
+  margin: 0 0 16px;
+  padding-left: 24px;
+}
+.guide-doc li {
+  margin: 4px 0;
+}
+.guide-doc blockquote {
+  margin: 16px 0;
+  padding: 10px 16px;
+  border-left: 3px solid var(--olive);
+  background: var(--card);
+  color: var(--ink-soft);
+  border-radius: 0 6px 6px 0;
+}
+.guide-doc blockquote p:last-child {
+  margin-bottom: 0;
+}
+.guide-doc code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.88em;
+  background: var(--card);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+.guide-doc pre {
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 14px 16px;
+  overflow-x: auto;
+  margin: 0 0 16px;
+}
+.guide-doc pre code {
+  background: none;
+  padding: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.guide-doc hr {
+  border: 0;
+  border-top: 1px solid var(--rule);
+  margin: 32px 0;
+}
+.guide-doc table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 0 18px;
+  font-size: 14.5px;
+}
+.guide-doc th,
+.guide-doc td {
+  border: 1px solid var(--rule);
+  padding: 8px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+.guide-doc th {
+  font-family: var(--head);
+  background: var(--card);
+  font-weight: 600;
+}
+.guide-doc em {
+  font-style: italic;
+}
+.guide-doc strong {
+  font-weight: 600;
+}

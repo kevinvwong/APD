@@ -368,6 +368,14 @@ export function CatalogClient({ fms }: CatalogClientProps) {
         <Link href="/ask" className={"chip ask-chip"}>
           ✦ Ask AI
         </Link>
+
+        <Link
+          href="/guide"
+          className="chip"
+          style={{ background: "transparent", textDecoration: "none" }}
+        >
+          📖 Guide
+        </Link>
       </div>
 
       {/* ---- Body ---- */}

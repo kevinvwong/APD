@@ -18,6 +18,13 @@ export function LandingClient() {
             </div>
           </div>
           <div className="landing-top-actions">
+            <a
+              href="/guide"
+              className="landing-btn-ghost"
+              style={{ textDecoration: "none" }}
+            >
+              Guide
+            </a>
             <SignInButton mode="modal">
               <button className="landing-btn-ghost">Sign in</button>
             </SignInButton>

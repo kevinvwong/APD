@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 // Everything else (the FM library, Ask, /library, library APIs) requires auth.
 const isPublicRoute = createRouteMatcher([
   "/",
+  "/guide",
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/api/health",
