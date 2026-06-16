@@ -5,7 +5,7 @@ import { AskPageClient } from "@/components/AskPageClient";
 export const metadata = {
   title: "Ask the Doctrine Library",
   description:
-    "Grounded answers drawn from 51 Field Manuals — every claim cites its source.",
+    "Grounded answers drawn from the Army's Field Manuals and reference library — every claim cites its source.",
 };
 
 export default function AskPage() {
