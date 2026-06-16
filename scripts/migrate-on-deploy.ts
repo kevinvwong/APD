@@ -1,4 +1,13 @@
 // scripts/migrate-on-deploy.ts
+//
+// ⚠️ NOT wired into the build. `drizzle-kit migrate` wraps migrations in a
+// transaction, which Neon's HTTP serverless driver can't run during the Vercel
+// build — so this aborted every production deploy. The runtime JSON fallback
+// (src/app/api/ask/route.ts) is the anti-drift safety net instead. Kept here
+// for manual/opt-in use (`MIGRATE_ON_DEPLOY=1 tsx scripts/migrate-on-deploy.ts`);
+// to re-wire it into deploys, give drizzle a transaction-capable connection
+// (a Neon WebSocket Pool or a plain pg/postgres client for migrations).
+//
 // Apply pending DB migrations as part of the build — but ONLY on Vercel
 // production builds, so schema and code ship together and can't drift. (Schema
 // drift is what caused the `relation "sources" does not exist` outage: the
