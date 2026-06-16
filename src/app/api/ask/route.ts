@@ -1,6 +1,12 @@
 // src/app/api/ask/route.ts
 // Server-side doctrine assistant endpoint.
-// POST { question, history?, mode?, fmId? } -> { answer, sources }
+// POST { question, history?, mode?, scope?, fmId?, conversationId? }
+//   -> streamed newline-delimited JSON (application/x-ndjson):
+//        {type:"meta", sources, conversationId}
+//        {type:"delta", text}            (repeated as the answer streams)
+//        {type:"done", messageId}
+//        {type:"error", error}
+//   Validation failures return a normal JSON error response (non-streamed).
 //
 // Requires:  npm install @anthropic-ai/sdk
 // Env:       ANTHROPIC_API_KEY (required), ANTHROPIC_MODEL (optional)
@@ -137,26 +143,6 @@ export async function POST(req: NextRequest) {
     const requestedConvoId =
       Number.isInteger(rawConvoId) && rawConvoId > 0 ? rawConvoId : null;
 
-    if (!sources.length && mode === "library") {
-      // Don't persist the "no results" fallback — it'd clutter conversation history
-      return NextResponse.json({
-        answer:
-          'I couldn\'t find anything relevant in the indexed sources for that. Try rephrasing with doctrinal terms, or switch to "Model + Library".',
-        sources: [],
-      });
-    }
-
-    const prompt = buildPrompt(question, sources, safeHistory, mode);
-    const msg = await anthropic.messages.create({
-      model: MODEL,
-      max_tokens: 1024,
-      messages: [{ role: "user", content: prompt }],
-    });
-    const answer = msg.content
-      .filter((b): b is Anthropic.TextBlock => b.type === "text")
-      .map((b) => b.text)
-      .join("");
-
     const sourceObjs = sources.map((s) => ({
       f: s.f,
       n: s.n,
@@ -167,71 +153,133 @@ export async function POST(req: NextRequest) {
       st: s.st ?? "doctrine",
     }));
 
-    // Persist to user's library if signed in
-    let conversationId: number | null = null;
-    let messageId: number | null = null;
-    if (userId) {
-      try {
-        // Verify or create conversation
-        let convo: { id: number } | undefined;
-        if (requestedConvoId) {
-          const [row] = await db
-            .select({ id: conversations.id })
-            .from(conversations)
-            .where(
-              and(
-                eq(conversations.id, requestedConvoId),
-                eq(conversations.user_id, userId),
-              ),
-            );
-          convo = row;
-        }
-        if (!convo) {
-          const [row] = await db
-            .insert(conversations)
-            .values({
-              user_id: userId,
-              fm_id: fmId,
-              title: question.slice(0, 120),
-              mode,
-            })
-            .returning({ id: conversations.id });
-          convo = row;
-        } else {
-          await db
-            .update(conversations)
-            .set({ updated_at: new Date() })
-            .where(eq(conversations.id, convo.id));
-        }
-        conversationId = convo.id;
+    const encoder = new TextEncoder();
+    const FALLBACK =
+      'I couldn\'t find anything relevant in the indexed sources for that. Try rephrasing with doctrinal terms, or switch to "Model + Library".';
 
-        // Save the Q + A
-        await db.insert(messages).values({
-          conversation_id: convo.id,
-          role: "user",
-          text: question,
-        });
-        const [aMsg] = await db
-          .insert(messages)
-          .values({
-            conversation_id: convo.id,
-            role: "assistant",
-            text: answer,
-            sources: sourceObjs,
-          })
-          .returning({ id: messages.id });
-        messageId = aMsg.id;
-      } catch (e) {
-        // Persistence failures should not break the user-facing answer
-        console.error("[/api/ask] persist failed:", e);
-      }
-    }
+    // Stream the answer as newline-delimited JSON events:
+    //   {type:"meta", sources, conversationId}
+    //   {type:"delta", text}            (repeated)
+    //   {type:"done", messageId}
+    //   {type:"error", error}
+    const stream = new ReadableStream<Uint8Array>({
+      async start(controller) {
+        const send = (obj: unknown) =>
+          controller.enqueue(encoder.encode(JSON.stringify(obj) + "\n"));
+        try {
+          // No-results fallback (library mode): stream the canned message and
+          // do not persist — it'd just clutter conversation history.
+          if (!sources.length && mode === "library") {
+            send({ type: "meta", sources: [], conversationId: null });
+            send({ type: "delta", text: FALLBACK });
+            send({ type: "done", messageId: null });
+            controller.close();
+            return;
+          }
 
-    return NextResponse.json({
-      answer,
-      sources: sourceObjs,
-      conversationId,
-      messageId,
+          // Create/resume the conversation and persist the question up front so
+          // the client receives a conversationId before tokens start flowing.
+          let conversationId: number | null = null;
+          if (userId) {
+            try {
+              let convo: { id: number } | undefined;
+              if (requestedConvoId) {
+                const [row] = await db
+                  .select({ id: conversations.id })
+                  .from(conversations)
+                  .where(
+                    and(
+                      eq(conversations.id, requestedConvoId),
+                      eq(conversations.user_id, userId),
+                    ),
+                  );
+                convo = row;
+              }
+              if (!convo) {
+                const [row] = await db
+                  .insert(conversations)
+                  .values({
+                    user_id: userId,
+                    fm_id: fmId,
+                    title: question.slice(0, 120),
+                    mode,
+                  })
+                  .returning({ id: conversations.id });
+                convo = row;
+              } else {
+                await db
+                  .update(conversations)
+                  .set({ updated_at: new Date() })
+                  .where(eq(conversations.id, convo.id));
+              }
+              conversationId = convo.id;
+              await db.insert(messages).values({
+                conversation_id: convo.id,
+                role: "user",
+                text: question,
+              });
+            } catch (e) {
+              // Persistence failures must not break the answer.
+              console.error("[/api/ask] convo persist failed:", e);
+              conversationId = null;
+            }
+          }
+
+          send({ type: "meta", sources: sourceObjs, conversationId });
+
+          // Stream the model's answer token-by-token.
+          const prompt = buildPrompt(question, sources, safeHistory, mode);
+          const llm = await anthropic.messages.create({
+            model: MODEL,
+            max_tokens: 1024,
+            stream: true,
+            messages: [{ role: "user", content: prompt }],
+          });
+          let answer = "";
+          for await (const ev of llm) {
+            if (
+              ev.type === "content_block_delta" &&
+              ev.delta.type === "text_delta"
+            ) {
+              answer += ev.delta.text;
+              send({ type: "delta", text: ev.delta.text });
+            }
+          }
+
+          // Persist the assistant turn now that the full text is known.
+          let messageId: number | null = null;
+          if (userId && conversationId != null) {
+            try {
+              const [aMsg] = await db
+                .insert(messages)
+                .values({
+                  conversation_id: conversationId,
+                  role: "assistant",
+                  text: answer,
+                  sources: sourceObjs,
+                })
+                .returning({ id: messages.id });
+              messageId = aMsg.id;
+            } catch (e) {
+              console.error("[/api/ask] answer persist failed:", e);
+            }
+          }
+          send({ type: "done", messageId });
+          controller.close();
+        } catch (e) {
+          console.error("[/api/ask] stream error:", e);
+          send({ type: "error", error: "Assistant unavailable." });
+          controller.close();
+        }
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "application/x-ndjson; charset=utf-8",
+        "Cache-Control": "no-cache, no-transform",
+        "X-Accel-Buffering": "no",
+      },
     });
   } catch (e: any) {
     // Log full detail server-side only; never leak SDK/internal messages to the
