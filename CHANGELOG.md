@@ -17,6 +17,10 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - **Semantic / hybrid retrieval** — OPTIONAL `RETRIEVE_BACKEND=hybrid` fuses the Postgres keyword path with pgvector semantic search via Reciprocal Rank Fusion (`src/lib/rank-fusion.ts`, unit-tested). Adds a provider-agnostic embeddings client (`src/lib/embed.ts`; OpenAI default, Voyage optional), the `0002_pgvector` migration (embedding column + HNSW index), and `npm run embed:sections` to populate vectors. Degrades to keyword-only if embeddings are unavailable. Default `json` backend is unchanged.
 - **Retrieval eval harness** — `npm run eval` scores a gold question set (`eval/retrieval-gold.json`) through the JSON backend and reports recall@k / MRR / section-recall, deterministically and offline. Metric math (`src/lib/eval-metrics.ts`) is unit-tested; `--min-recall` can gate. Baseline on the current keyword scoring: recall@8 ≈ 75%.
 
+### Fixed
+
+- **Schema/code drift on deploy** — migrations now run automatically as part of the build on Vercel **production** deploys (`scripts/migrate-on-deploy.ts`, gated by `VERCEL_ENV`), so schema and code ship together. Skipped in CI, previews, and local builds. Prevents recurrence of the `relation "sources" does not exist` outage where the `sources` code deployed before the rename migration was applied.
+
 ## [0.1.0] — 2026-06-10
 
 ### Added
