@@ -18,6 +18,7 @@
     "check:index": "tsx scripts/check-index-fresh.ts",
     "eval": "tsx scripts/eval-retrieval.ts",
     "index:db": "tsx scripts/index-sections-to-db.ts",
+    "embed:sections": "tsx scripts/embed-sections.ts",
     "figures:extract": "python scripts/extract-figures.py",
     "figures:upload": "tsx scripts/upload-figures.ts"
   },

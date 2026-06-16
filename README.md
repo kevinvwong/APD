@@ -115,7 +115,25 @@ npm run dev
 | `npm run search:index` | Rebuild keyword search index from DB |
 | `npm run db:generate`  | Generate Drizzle migration files     |
 | `npm run db:migrate`   | Run pending migrations               |
+| `npm run embed:sections` | Populate pgvector embeddings (hybrid retrieval) |
 | `npm run eval`         | Score retrieval against the gold set (recall@k / MRR) |
+
+## Retrieval backends
+
+`POST /api/ask` retrieves excerpts via one of three backends, chosen by `RETRIEVE_BACKEND`:
+
+- **`json`** (default) — keyword scoring over the prebuilt `search-index.json`. Zero infra, build-safe.
+- **`pg`** — Postgres full-text search (tsvector) over `fm_sections`. Requires the section index in the DB (`npm run index:db`).
+- **`hybrid`** — fuses the `pg` keyword path with **pgvector semantic search** via Reciprocal Rank Fusion. Best recall for conceptual queries across the book corpus. Setup:
+
+  ```bash
+  npm run db:migrate          # applies 0002_pgvector (extension + embedding column + HNSW index)
+  npm run index:db            # populate fm_sections
+  npm run embed:sections      # embed each section (needs OPENAI_API_KEY or VOYAGE_API_KEY)
+  # then set RETRIEVE_BACKEND=hybrid
+  ```
+
+  Embeddings default to OpenAI `text-embedding-3-small` (1536-d); set `EMBED_PROVIDER=voyage` for Voyage AI. The query embeds per request; if embeddings are unavailable it degrades to keyword-only.
 
 ## Retrieval evaluation
 

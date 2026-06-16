@@ -15,6 +15,7 @@ import { db } from "@/db";
 import { conversations, messages } from "@/db/schema";
 import { retrieve, type Section } from "@/lib/retrieve";
 import { retrieve as retrievePg } from "@/lib/retrieve-pg";
+import { retrieve as retrieveHybrid } from "@/lib/retrieve-hybrid";
 import { buildPrompt, type AskMode, type ChatTurn } from "@/lib/ask-prompt";
 
 export const runtime = "nodejs"; // needs fs to read the index
@@ -22,12 +23,13 @@ export const runtime = "nodejs"; // needs fs to read the index
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 const MODEL = process.env.ANTHROPIC_MODEL || "claude-haiku-4-5";
 
-// Retrieval backend selector. Default ("json") keeps the existing,
-// build-safe JSON-file path. Set RETRIEVE_BACKEND=pg to use the OPTIONAL
-// Postgres full-text path (src/lib/retrieve-pg.ts), which requires a live DB
-// with the fm_sections table + tsvector index populated. Both share the same
-// (question, k, restrictFm) -> Section[] contract; retrievePg is async.
-const USE_PG = process.env.RETRIEVE_BACKEND === "pg";
+// Retrieval backend selector. Default ("json") keeps the existing, build-safe
+// JSON-file path. "pg" uses the OPTIONAL Postgres full-text path, "hybrid"
+// fuses keyword + pgvector semantic search. The pg/hybrid backends require a
+// live DB with fm_sections populated (and, for hybrid, embeddings + a provider
+// key). All share the same (question, k, restrictFm, includePrivate, scope) ->
+// Section[] contract; the async ones are awaited.
+const BACKEND = (process.env.RETRIEVE_BACKEND || "json").toLowerCase();
 
 type Scope = "all" | "doctrine" | "book";
 
@@ -38,9 +40,11 @@ async function getSources(
   includePrivate: boolean,
   scope: Scope,
 ): Promise<Section[]> {
-  return USE_PG
-    ? retrievePg(question, k, restrictFm, includePrivate, scope)
-    : retrieve(question, k, restrictFm, includePrivate, scope);
+  if (BACKEND === "hybrid")
+    return retrieveHybrid(question, k, restrictFm, includePrivate, scope);
+  if (BACKEND === "pg")
+    return retrievePg(question, k, restrictFm, includePrivate, scope);
+  return retrieve(question, k, restrictFm, includePrivate, scope);
 }
 
 // Input bounds — keep the LLM context (and abuse surface) small and predictable.
