@@ -17,6 +17,10 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - **Semantic / hybrid retrieval** — OPTIONAL `RETRIEVE_BACKEND=hybrid` fuses the Postgres keyword path with pgvector semantic search via Reciprocal Rank Fusion (`src/lib/rank-fusion.ts`, unit-tested). Adds a provider-agnostic embeddings client (`src/lib/embed.ts`; OpenAI default, Voyage optional), the `0002_pgvector` migration (embedding column + HNSW index), and `npm run embed:sections` to populate vectors. Degrades to keyword-only if embeddings are unavailable. Default `json` backend is unchanged.
 - **Retrieval eval harness** — `npm run eval` scores a gold question set (`eval/retrieval-gold.json`) through the JSON backend and reports recall@k / MRR / section-recall, deterministically and offline. Metric math (`src/lib/eval-metrics.ts`) is unit-tested; `--min-recall` can gate. Baseline on the current keyword scoring: recall@8 ≈ 75%.
 
+### Fixed
+
+- **Resilient retrieval backend** — `/api/ask` now falls back to the always-available JSON backend if the `pg`/`hybrid` backend throws (e.g. `RETRIEVE_BACKEND=pg` set but `fm_sections` not created/populated). A misconfigured or unmigrated retrieval backend previously took Ask down with a 500; it now degrades gracefully.
+
 ## [0.1.0] — 2026-06-10
 
 ### Added
