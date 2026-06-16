@@ -1,0 +1,21 @@
+{
+  "_comment": "Gold set for the retrieval eval harness (scripts/eval-retrieval.ts). Each case lists the fm_number(s) whose section should appear in the top-k results for the question, plus optional keywords that pin the right section. fms are validated against the live corpus.",
+  "cases": [
+    { "id": "mission-command", "q": "What are the principles of mission command?", "fms": ["FM 6-0"], "keywords": ["mission command"] },
+    { "id": "defense", "q": "How is an area defense organized?", "fms": ["FM 3-90"], "keywords": ["defense"] },
+    { "id": "offense", "q": "What are the forms of the offense?", "fms": ["FM 3-90"], "keywords": ["offense", "attack"] },
+    { "id": "mdmp", "q": "What are the steps of the military decision-making process?", "fms": ["FM 5-0"], "keywords": ["military decision", "mdmp"] },
+    { "id": "operations-process", "q": "What are the activities of the operations process?", "fms": ["FM 5-0"], "keywords": ["operations process"] },
+    { "id": "intelligence", "q": "What are the tasks of the intelligence warfighting function?", "fms": ["FM 2-0"], "keywords": ["intelligence"] },
+    { "id": "leadership", "q": "What are the Army leadership competencies and attributes?", "fms": ["FM 6-22"], "keywords": ["leadership", "attribute", "competenc"] },
+    { "id": "fires-targeting", "q": "How is the targeting process conducted for fire support?", "fms": ["FM 3-09"], "keywords": ["targeting", "fire support"] },
+    { "id": "sustainment", "q": "What are the sustainment warfighting function tasks?", "fms": ["FM 4-0"], "keywords": ["sustainment"] },
+    { "id": "counterinsurgency", "q": "What are the principles of counterinsurgency?", "fms": ["FM 3-24"], "keywords": ["counterinsurgency", "insurgen"] },
+    { "id": "h2f", "q": "What are the components of holistic health and fitness?", "fms": ["FM 7-22"], "keywords": ["holistic health", "fitness"] },
+    { "id": "multidomain", "q": "What are the tenets of multidomain operations?", "fms": ["FM 3-0"], "keywords": ["multidomain", "operations"] },
+    { "id": "cbrn", "q": "How does the Army conduct CBRN defense operations?", "fms": ["FM 3-11"], "keywords": ["cbrn", "chemical", "nuclear"] },
+    { "id": "stability", "q": "What are the Army stability operations tasks?", "fms": ["FM 3-07"], "keywords": ["stability"] },
+    { "id": "electromagnetic-warfare", "q": "What is electromagnetic warfare in Army operations?", "fms": ["FM 3-12"], "keywords": ["electromagnetic", "spectrum", "cyber"] },
+    { "id": "echelons", "q": "What are the roles of the corps and division headquarters?", "fms": ["FM 3-94"], "keywords": ["corps", "division"] }
+  ]
+}

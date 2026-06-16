@@ -116,6 +116,7 @@ npm run dev
 | `npm run db:generate`  | Generate Drizzle migration files     |
 | `npm run db:migrate`   | Run pending migrations               |
 | `npm run embed:sections` | Populate pgvector embeddings (hybrid retrieval) |
+| `npm run eval`         | Score retrieval against the gold set (recall@k / MRR) |
 
 ## Retrieval backends
 
@@ -133,6 +134,15 @@ npm run dev
   ```
 
   Embeddings default to OpenAI `text-embedding-3-small` (1536-d); set `EMBED_PROVIDER=voyage` for Voyage AI. The query embeds per request; if embeddings are unavailable it degrades to keyword-only.
+
+## Retrieval evaluation
+
+`npm run eval` runs a gold question set (`eval/retrieval-gold.json`) through the
+default JSON retrieval backend and reports **recall@k**, **MRR**, and
+**section-recall** — a fast, deterministic, offline signal (no DB/LLM) for
+catching regressions and comparing scoring changes. The metric math
+(`src/lib/eval-metrics.ts`) is unit-tested. `--min-recall <x>` exits non-zero
+below a threshold, so it can gate CI; `--k <n>` sets the window.
 
 ## FM content
 
