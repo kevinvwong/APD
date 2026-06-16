@@ -14,6 +14,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - **Private-source gating** — retrieval (`src/lib/retrieve.ts` + the Postgres path) excludes `access = "private"` sources unless the Ask request is authenticated, so in-copyright book content is only ever served to signed-in users.
 - **Book ingestion** — `npm run book:ingest` (`scripts/ingest-book.ts`) ingests a single Markdown-converted reference work as a private `book` source. Books are not bundled (copyright); supply your own licensed Markdown.
 - **Reference Library + Ask scope** — the catalog now splits doctrinal series from a dedicated "Reference Library" section (with a rail filter), so book sources surface properly instead of being dropped from the by-number series view. The library-wide Ask gains an All / Field Manuals / Reference corpus scope (threaded through both retrieval paths), and cited book sources get a "Book" tag.
+- **Semantic / hybrid retrieval** — OPTIONAL `RETRIEVE_BACKEND=hybrid` fuses the Postgres keyword path with pgvector semantic search via Reciprocal Rank Fusion (`src/lib/rank-fusion.ts`, unit-tested). Adds a provider-agnostic embeddings client (`src/lib/embed.ts`; OpenAI default, Voyage optional), the `0002_pgvector` migration (embedding column + HNSW index), and `npm run embed:sections` to populate vectors. Degrades to keyword-only if embeddings are unavailable. Default `json` backend is unchanged.
 
 ## [0.1.0] — 2026-06-10
 
