@@ -27,6 +27,25 @@ export interface ChatTurn {
   text: string;
 }
 
+/** Live callbacks for the streamed answer. Both are optional; omit them to just
+ *  await the assembled AskResult. */
+export interface AskStreamHandlers {
+  onMeta?: (m: { sources: AskSource[]; conversationId: number | null }) => void;
+  onDelta?: (text: string) => void;
+}
+
+type StreamEvent =
+  | { type: "meta"; sources?: AskSource[]; conversationId?: number | null }
+  | { type: "delta"; text?: string }
+  | { type: "done"; messageId?: number | null }
+  | { type: "error"; error?: string };
+
+/**
+ * Ask the assistant. The endpoint streams newline-delimited JSON; this consumes
+ * the stream, invoking `handlers` as events arrive, and resolves with the fully
+ * assembled result. Callers that don't pass handlers simply get the final
+ * AskResult once the stream completes.
+ */
 export async function askLibrary(opts: {
   question: string;
   mode?: AskMode;
@@ -35,6 +54,7 @@ export async function askLibrary(opts: {
   history?: ChatTurn[];
   conversationId?: number | null;
   signal?: AbortSignal;
+  handlers?: AskStreamHandlers;
 }): Promise<AskResult> {
   const res = await fetch("/api/ask", {
     method: "POST",
@@ -49,11 +69,50 @@ export async function askLibrary(opts: {
     }),
     signal: opts.signal,
   });
-  if (!res.ok) {
+  if (!res.ok || !res.body) {
     const { error } = await res.json().catch(() => ({ error: res.statusText }));
     throw new Error(error || `Request failed (${res.status})`);
   }
-  return res.json();
+
+  let answer = "";
+  let sources: AskSource[] = [];
+  let conversationId: number | null = null;
+  let messageId: number | null = null;
+
+  const handle = (evt: StreamEvent) => {
+    if (evt.type === "meta") {
+      sources = Array.isArray(evt.sources) ? evt.sources : [];
+      conversationId = evt.conversationId ?? null;
+      opts.handlers?.onMeta?.({ sources, conversationId });
+    } else if (evt.type === "delta") {
+      const t = typeof evt.text === "string" ? evt.text : "";
+      answer += t;
+      opts.handlers?.onDelta?.(t);
+    } else if (evt.type === "done") {
+      messageId = evt.messageId ?? null;
+    } else if (evt.type === "error") {
+      throw new Error(evt.error || "Assistant error");
+    }
+  };
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = "";
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, { stream: true });
+    let nl: number;
+    while ((nl = buf.indexOf("\n")) >= 0) {
+      const line = buf.slice(0, nl).trim();
+      buf = buf.slice(nl + 1);
+      if (line) handle(JSON.parse(line) as StreamEvent);
+    }
+  }
+  const tail = buf.trim();
+  if (tail) handle(JSON.parse(tail) as StreamEvent);
+
+  return { answer, sources, conversationId, messageId };
 }
 
 // Deep-link to a section in the reader (e.g. `/fm/${f}#${a}`).

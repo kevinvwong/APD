@@ -371,6 +371,16 @@ export function AskPageClient({ fmId, fm }: Props) {
     // already restricted to that manual.
     const effectiveScope: AskScope = fmId ? "all" : scope;
 
+    // Patch the streaming (last) assistant message in place.
+    const patchLastAssistant = (fn: (m: Message) => Message) =>
+      setMessages((prev) => {
+        if (!prev.length || prev[prev.length - 1].role !== "assistant")
+          return prev;
+        const copy = prev.slice();
+        copy[copy.length - 1] = fn(copy[copy.length - 1]);
+        return copy;
+      });
+
     try {
       setPhase(
         effectiveScope === "book"
@@ -387,43 +397,50 @@ export function AskPageClient({ fmId, fm }: Props) {
         history,
         conversationId,
         signal: ctrl.signal,
-      });
-      setPhase(mode === "open" ? "Reasoning…" : "Consulting doctrine…");
-      // First response on a new thread → store the returned conversationId
-      if (result.conversationId && !conversationId) {
-        setConversationId(result.conversationId);
-        // Reflect in URL so refresh / share-link works without re-creating
-        if (typeof window !== "undefined") {
-          const url = new URL(window.location.href);
-          url.searchParams.set("conversation", String(result.conversationId));
-          window.history.replaceState({}, "", url.toString());
-        }
-      }
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          text: result.answer,
-          sources: result.sources,
-          mode,
-          messageId: result.messageId ?? null,
-          starred: false,
+        handlers: {
+          // Sources + conversationId land before the answer streams.
+          onMeta: ({ sources, conversationId: cid }) => {
+            setPhase(mode === "open" ? "Reasoning…" : "Consulting doctrine…");
+            if (cid && !conversationId) {
+              setConversationId(cid);
+              if (typeof window !== "undefined") {
+                const url = new URL(window.location.href);
+                url.searchParams.set("conversation", String(cid));
+                window.history.replaceState({}, "", url.toString());
+              }
+            }
+            // Append the assistant bubble that the deltas will fill in.
+            setMessages((prev) => [
+              ...prev,
+              { role: "assistant", text: "", sources, mode, messageId: null, starred: false },
+            ]);
+          },
+          onDelta: (t) => patchLastAssistant((m) => ({ ...m, text: m.text + t })),
         },
-      ]);
+      });
+      // Finalize: reconcile with the assembled result (text, sources, id).
+      patchLastAssistant((m) => ({
+        ...m,
+        text: result.answer || m.text,
+        sources: result.sources,
+        messageId: result.messageId ?? null,
+      }));
     } catch (err: unknown) {
       const e = err as { name?: string; message?: string };
       if (e?.name !== "AbortError") {
-        setMessages((prev) => [
-          ...prev,
-          {
-            role: "assistant",
-            text:
-              "⚠ The assistant is unavailable right now (" +
-              (e?.message || "error") +
-              "). This may be a rate limit — try again in a moment.",
-            sources: [],
-          },
-        ]);
+        const errText =
+          "⚠ The assistant is unavailable right now (" +
+          (e?.message || "error") +
+          "). This may be a rate limit — try again in a moment.";
+        setMessages((prev) => {
+          // Replace the in-progress assistant bubble if one exists, else add one.
+          if (prev.length && prev[prev.length - 1].role === "assistant") {
+            const copy = prev.slice();
+            copy[copy.length - 1] = { role: "assistant", text: errText, sources: [] };
+            return copy;
+          }
+          return [...prev, { role: "assistant", text: errText, sources: [] }];
+        });
       }
     } finally {
       setBusy(false);
@@ -498,11 +515,18 @@ export function AskPageClient({ fmId, fm }: Props) {
               </div>
             ) : (
               <div className="a-block" key={i}>
-                <Answer
-                  text={m.text}
-                  sources={m.sources || []}
-                  onCiteClick={onCiteClick}
-                />
+                {m.text ? (
+                  <Answer
+                    text={m.text}
+                    sources={m.sources || []}
+                    onCiteClick={onCiteClick}
+                  />
+                ) : (
+                  <div className="thinking">
+                    <span className="dotpulse" />
+                    {phase}
+                  </div>
+                )}
                 {m.messageId != null && (
                   <button
                     className="star-btn"
@@ -582,15 +606,18 @@ export function AskPageClient({ fmId, fm }: Props) {
             ),
           )}
 
-          {/* Busy state */}
-          {busy && (
-            <div className="a-block">
-              <div className="thinking">
-                <span className="dotpulse" />
-                {phase}
+          {/* Busy state — only until the streaming assistant bubble appears
+              (after that, the bubble shows its own pulse / streaming text). */}
+          {busy &&
+            (messages.length === 0 ||
+              messages[messages.length - 1].role === "user") && (
+              <div className="a-block">
+                <div className="thinking">
+                  <span className="dotpulse" />
+                  {phase}
+                </div>
               </div>
-            </div>
-          )}
+            )}
         </div>
       </div>
 
