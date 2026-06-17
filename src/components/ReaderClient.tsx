@@ -48,7 +48,8 @@ interface ToolbarState {
 export function ReaderClient({
   fm,
   doc,
-  fmIndex,
+  // `fmIndex` is consumed server-side by parseFM() to render xref-live anchors;
+  // the client no longer wires xrefs itself, so it is intentionally not read here.
   initialHighlights = [],
 }: Props) {
   const router = useRouter();
