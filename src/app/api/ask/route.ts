@@ -16,7 +16,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { auth } from "@clerk/nextjs/server";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { conversations, messages } from "@/db/schema";
 import { retrieve, type Section } from "@/lib/retrieve";
@@ -39,6 +39,57 @@ const BACKEND = (process.env.RETRIEVE_BACKEND || "json").toLowerCase();
 
 type Scope = "all" | "doctrine" | "book";
 
+// Per-cold-start cache for the pg/hybrid backend health probe. `null` means
+// "not yet probed". A misconfigured backend (table missing, empty, embeddings
+// unset) flips this to `false` after one probe and stays there for the life
+// of the process, so we don't hammer Neon with a doomed query on every Ask.
+let pgBackendHealthy: boolean | null = null;
+
+/**
+ * Cheap, cached health probe for the configured pg/hybrid backend. Decides
+ * whether retrieval is allowed to attempt the live DB path at all.
+ *
+ * Distinguishes the two cases the old `out.length === 0 -> fall back` heuristic
+ * conflated:
+ *   - Backend healthy, query has zero hits  -> probe says true, caller returns
+ *     the empty result to the user as intended.
+ *   - Backend unhealthy (table missing/empty/misconfigured) -> probe says
+ *     false, caller skips the backend entirely and uses JSON.
+ *
+ * Cached per cold start; warns ONCE on first failure.
+ */
+async function probePgBackend(): Promise<boolean> {
+  if (pgBackendHealthy !== null) return pgBackendHealthy;
+  try {
+    // Reuses the existing Neon connection from `@/db` — same one
+    // retrieve-pg.ts uses. SELECT 1 ... LIMIT 1 is the canonical "is the
+    // table reachable AND non-empty" probe.
+    const rows = await db.execute<{ ok: number }>(
+      sql`SELECT 1 AS ok FROM fm_sections LIMIT 1`,
+    );
+    const list: unknown[] = Array.isArray(rows)
+      ? (rows as unknown[])
+      : ((rows as { rows?: unknown[] }).rows ?? []);
+    if (list.length >= 1) {
+      pgBackendHealthy = true;
+      return true;
+    }
+    pgBackendHealthy = false;
+    console.warn(
+      "[ask] pg backend unhealthy; falling back to JSON for all queries this cold start. Cause:",
+      "fm_sections returned 0 rows (table empty / not populated)",
+    );
+    return false;
+  } catch (e) {
+    pgBackendHealthy = false;
+    console.warn(
+      "[ask] pg backend unhealthy; falling back to JSON for all queries this cold start. Cause:",
+      e,
+    );
+    return false;
+  }
+}
+
 async function getSources(
   question: string,
   k: number,
@@ -47,26 +98,38 @@ async function getSources(
   scope: Scope,
 ): Promise<Section[]> {
   // The pg/hybrid backends depend on live DB state (fm_sections populated,
-  // pgvector, etc.). Degrade to the always-available JSON path if the query
-  // throws (table missing) OR returns nothing (table present but empty/
-  // unpopulated) — a misconfigured or half-set-up backend should never take
-  // Ask down or silently answer "no results".
-  try {
-    if (BACKEND === "hybrid" || BACKEND === "pg") {
+  // pgvector, etc.). Two distinct cases the route must handle differently:
+  //
+  //   1. Backend unhealthy (table missing/empty/misconfigured) -> the probe
+  //      flips a per-cold-start flag to false; we skip the live backend
+  //      entirely and serve from JSON.
+  //   2. Backend healthy + query returns rows -> return them.
+  //   3. Backend healthy + query returns ZERO rows -> return empty. The user
+  //      asked something with no hits in the corpus; the route surfaces the
+  //      canned "no results" fallback message to them. We must NOT silently
+  //      answer from a different backend.
+  //
+  // Thrown errors during a normal query (transient DB blip) still fall through
+  // to the JSON path via the catch below, matching prior behaviour.
+  if (BACKEND === "hybrid" || BACKEND === "pg") {
+    const healthy = await probePgBackend();
+    if (!healthy) {
+      return retrieve(question, k, restrictFm, includePrivate, scope);
+    }
+    try {
       const out =
         BACKEND === "hybrid"
           ? await retrieveHybrid(question, k, restrictFm, includePrivate, scope)
           : await retrievePg(question, k, restrictFm, includePrivate, scope);
-      if (out.length) return out;
-      console.warn(
-        `[/api/ask] "${BACKEND}" backend returned no rows; falling back to json backend.`,
+      // Healthy backend, legitimate result (possibly empty) -> return as-is.
+      return out;
+    } catch (e) {
+      console.error(
+        `[/api/ask] "${BACKEND}" retrieval threw; falling back to json backend for this request:`,
+        e,
       );
+      return retrieve(question, k, restrictFm, includePrivate, scope);
     }
-  } catch (e) {
-    console.error(
-      `[/api/ask] "${BACKEND}" retrieval failed; falling back to json backend:`,
-      e,
-    );
   }
   return retrieve(question, k, restrictFm, includePrivate, scope);
 }
