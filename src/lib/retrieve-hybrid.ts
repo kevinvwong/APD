@@ -47,6 +47,13 @@ async function vectorRanked(
     return [];
   }
   if (!queryVec?.length) return [];
+  // Guard against NaN/Infinity in the embedding before interpolating into
+  // SQL — pgvector rejects them, and JS's `[NaN].toString()` silently
+  // produces `[NaN]` which fails at parse time with an opaque error.
+  // The caller (/api/ask) catches this and falls back to JSON retrieval.
+  if (queryVec.some((v) => !Number.isFinite(v))) {
+    throw new Error("Embedding contains non-finite values");
+  }
   const vecLiteral = `[${queryVec.join(",")}]`;
 
   const fmFilter = restrictFm != null ? sql`AND fm_id = ${restrictFm}` : sql``;
