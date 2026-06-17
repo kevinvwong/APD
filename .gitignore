@@ -15,6 +15,9 @@ tsconfig.tsbuildinfo
 # Claude Code session data
 .claude/
 
+# Scratch / debug artifacts (figures, screenshots, one-off diagnostics)
+.tmp/
+
 # Python (FM acquisition scripts)
 __pycache__/
 *.pyc
