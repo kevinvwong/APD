@@ -11,6 +11,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/migrate.ts",
     "db:push": "drizzle-kit push",
+    "db:check": "tsx scripts/check-schema.ts",
     "db:seed": "npx tsx src/db/seed.ts",
     "book:ingest": "tsx scripts/ingest-book.ts",
     "books:ingest-all": "tsx scripts/ingest-books.ts",
