@@ -115,11 +115,6 @@ export async function askLibrary(opts: {
   return { answer, sources, conversationId, messageId };
 }
 
-// Deep-link to a section in the reader (e.g. `/fm/${f}#${a}`).
-export function sectionHref(s: AskSource): string {
-  return `/fm/${s.f}#${s.a}`;
-}
-
 /** Toggle a star on a persisted assistant message. Requires signed-in user. */
 export async function setMessageStar(
   messageId: number,

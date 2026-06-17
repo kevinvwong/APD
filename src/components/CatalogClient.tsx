@@ -277,12 +277,26 @@ export function CatalogClient({ fms }: CatalogClientProps) {
     if (listRef.current) listRef.current.scrollTop = 0;
   }, []);
 
-  // Toggle bookmark
+  // Toggle bookmark. Mirrors ReaderClient.toggleBookmark: update localStorage
+  // (via setBookmarks) and fire-and-forget sync to the DB so catalog stars also
+  // reach the user's Library and other devices. 401 for anon users is fine.
   const toggleBookmark = useCallback(
     (id: number) => {
-      setBookmarks((prev) =>
-        prev.includes(id) ? prev.filter((b) => b !== id) : [...prev, id],
-      );
+      setBookmarks((prev) => {
+        const adding = !prev.includes(id);
+        if (adding) {
+          fetch("/api/library/bookmarks", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ fm_id: id }),
+          }).catch(() => {});
+        } else {
+          fetch(`/api/library/bookmarks?fm_id=${id}`, {
+            method: "DELETE",
+          }).catch(() => {});
+        }
+        return adding ? [...prev, id] : prev.filter((b) => b !== id);
+      });
     },
     [setBookmarks],
   );

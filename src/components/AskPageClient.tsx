@@ -297,6 +297,10 @@ export function AskPageClient({ fmId, fm }: Props) {
         if (!res.ok) return;
         const data = await res.json();
         if (cancelled || !data.messages) return;
+        // Restore the conversation's answer mode so the source header label is
+        // correct on resumed answers and follow-up questions reuse it.
+        const convoMode: AskMode =
+          data.conversation?.mode === "open" ? "open" : "library";
         const loaded: Message[] = data.messages.map(
           (m: {
             id: number;
@@ -308,11 +312,13 @@ export function AskPageClient({ fmId, fm }: Props) {
             role: m.role,
             text: m.text,
             sources: (m.sources ?? undefined) as AskSource[] | undefined,
+            mode: m.role === "assistant" ? convoMode : undefined,
             messageId: m.id,
             starred: !!m.starred,
           }),
         );
         setMessages(loaded);
+        setMode(convoMode);
       } catch {
         // ignore load failures
       }
