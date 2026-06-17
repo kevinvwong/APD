@@ -8,7 +8,7 @@ into the DB via each book's `citation`.
 
 > Books are **not** committed to this repo by default. Run the pipeline below to
 > fetch/convert them locally, then ingest. (PDFs of the in-copyright staples —
-> *Classics of Organization Theory*, *Reframing Organizations* — are **not**
+> _Classics of Organization Theory_, _Reframing Organizations_ — are **not**
 > included and should be added only as `private` sources if you are licensed.)
 
 ## One-command ingest
@@ -40,22 +40,59 @@ on every PR so a missing or corrupt index can't ship.
 
 ## The corpus (`manifest.json`)
 
-| Title | License | Fetch |
-| ----- | ------- | ----- |
-| Taylor — *The Principles of Scientific Management* (1911) | Public domain | auto (Gutenberg) |
-| Follett — *The New State* (1918) | Public domain | auto (Standard Ebooks) |
-| Follett — *Creative Experience* (1924) | Public domain | auto (Internet Archive) |
-| OpenStax — *Organizational Behavior* (2019) | CC BY 4.0 | manual |
-| OpenStax — *Principles of Management* (2019) | CC BY 4.0 | manual |
-| Bauer & Erdogan — *Organizational Behavior* (2010) | CC BY-NC-SA 3.0 | manual |
-| Renfro — *Public Administration: The Essentials* | CC BY-NC-SA 4.0 | manual |
+| Title                                                     | License         | Fetch  | Obtained via                                                  |
+| --------------------------------------------------------- | --------------- | ------ | ------------------------------------------------------------- |
+| Taylor — _The Principles of Scientific Management_ (1911) | Public domain   | auto   | Gutenberg plain text                                          |
+| Follett — _The New State_ (1918)                          | Public domain   | auto   | Standard Ebooks HTML                                          |
+| OpenStax — _Organizational Behavior_ (2019)               | CC BY 4.0       | manual | Internet Archive text-PDF → `scripts/book-pdf-to-md.py`       |
+| OpenStax — _Principles of Management_ (2019)              | CC BY 4.0       | manual | Internet Archive text-PDF → `scripts/book-pdf-to-md.py`       |
+| Bauer & Erdogan — _Organizational Behavior_ (2010)        | CC BY-NC-SA 3.0 | manual | Flat World PDF (LMS-hosted) → `scripts/book-pdf-to-md.py`     |
+| Renfro — _Public Administration: The Essentials_ (2023)   | CC BY-NC-SA 4.0 | manual | UMN Manifold reader API → `scripts/fetch-renfro-manifold.mjs` |
 
 **auto** entries are downloaded and converted to Markdown by
-`scripts/ingest-books.ts`. **manual** entries are multi-page textbooks: download
-the official PDF/EPUB from the `url` in the manifest, convert with
-`python pdf_to_md.py` (or any heading-preserving converter) into
-`books/<id>.md`, then re-run `npm run books:ingest-all` — it ingests every
-`books/<id>.md` present and skips the rest.
+`scripts/ingest-books.ts` directly from the manifest `url`. **manual** entries
+could not be fetched headlessly (the publisher landing pages are JS-gated, the
+PDFs need font-size heading extraction, or the host blocks non-browser clients) —
+each manifest entry's `note` records the exact verified source and obtain method.
+Produce `books/<id>.md` out-of-band per the `note`, then run
+`npm run books:ingest-all -- --no-fetch` — it ingests every `books/<id>.md`
+present and skips the rest.
+
+> **Dropped:** Follett — _Creative Experience_ (1924). Its only available sources
+> are scanned OCR (Internet Archive djvu/PDF), which produced unusable section
+> structure (page numbers and OCR garble parsed as headings). Re-add only if a
+> born-digital edition (Gutenberg/Standard Ebooks) appears.
+>
+> **Lesson:** validate converted **structure** (sane headings), not just word
+> count, before ingesting — `--dry-run` reports words but a clean count can still
+> hide an OCR blob. Spot-check `grep "^#" books/<id>.md` head _and_ tail.
+
+## Authored sources (`books/authored/`)
+
+Some `book` sources are **original APD-written content**, not fetched works.
+These are summaries we author in our own words — useful when a framework is
+valuable to reference but is proprietary/copyrighted and so cannot be ingested as
+text (e.g. ITIL). They are **not** in `manifest.json` (it models only fetched
+works, which need a `fetch` type + URL). Unlike the fetched-book `.md` cache,
+**authored `.md` files ARE the canonical source and are committed to the repo** —
+there is no upstream to regenerate them from.
+
+Ingest one with the single-source script (it upserts on filename):
+
+```bash
+npx tsx scripts/ingest-book.ts \
+  --file ./books/authored/itil4-overview-and-crosswalk.md \
+  --title "ITIL 4: An Overview and Doctrine Crosswalk" \
+  --ref "ITIL 4 Overview (APD)" \
+  --author "APD (original summary)" \
+  --citation "APD. ITIL 4: …. ITIL® is a trademark of AXELOS/PeopleCert; independent, not endorsed." \
+  --access public
+npm run search:index
+```
+
+| Title                                        | Note                                                                                                                                                                                                                                                                          |
+| -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| _ITIL 4: An Overview and Doctrine Crosswalk_ | Original summary of the ITIL® 4 framework + a crosswalk to the FM/management corpus. ITIL® is a registered trademark of AXELOS/PeopleCert; this work is independent and not endorsed by them. Refers to the framework nominatively; reproduces none of the official guidance. |
 
 ## License notes
 

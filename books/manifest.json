@@ -1,5 +1,5 @@
 {
-  "_comment": "Curated open-license organization/management theory corpus for APD. Each entry ingests as one `book` source. `access` is 'public' because every title here is public-domain or openly (CC) licensed and therefore redistributable; `license` records the exact terms (attribution is carried into the DB via `citation`). `fetch` describes how scripts/ingest-books.ts obtains the text: 'auto' = downloaded + converted by the script from `url`; 'manual' = multi-page source you download via the official export and convert with pdf_to_md.py into books/<id>.md before running the ingest.",
+  "_comment": "Curated open-license organization/management theory corpus for APD. Each entry ingests as one `book` source. `access` is 'public' because every title here is public-domain or openly (CC) licensed and therefore redistributable; `license` records the exact terms (attribution is carried into the DB via `citation`). `fetch` describes how scripts/ingest-books.ts obtains the text: 'gutenberg-txt' | 'html' | 'text' = downloaded + converted by the script from `url`; 'manual' = source the script cannot fetch headlessly (PDF behind a converter, or a site that blocks non-browser clients), so produce books/<id>.md out-of-band first (see each entry's `note`) and run the ingest with --no-fetch. NOTE (2026-06): the original landing-page URLs for the OpenStax/Pressbooks/ScholarWorks titles were JS-gated, removed, or WAF-challenged and could not be fetched headlessly; entries now point at the verified ungated sources actually used, with the exact obtain method in `note`. Follett's 'Creative Experience' was removed from the corpus — its only available sources are scanned OCR (Internet Archive djvu/PDF) which produced unusable section structure; re-add only if a born-digital edition appears.",
   "books": [
     {
       "id": "taylor-scientific-management",
@@ -24,17 +24,6 @@
       "url": "https://standardebooks.org/ebooks/mary-parker-follett/the-new-state/text/single-page"
     },
     {
-      "id": "follett-creative-experience",
-      "title": "Creative Experience",
-      "ref": "Follett 1924",
-      "author": "Mary Parker Follett",
-      "citation": "Follett, M. P. (1924). Creative Experience. Longmans, Green and Co. Public domain.",
-      "access": "public",
-      "license": "Public Domain (US)",
-      "fetch": "text",
-      "url": "https://archive.org/download/creativeexperien00foll/creativeexperien00foll_djvu.txt"
-    },
-    {
       "id": "openstax-organizational-behavior",
       "title": "Organizational Behavior",
       "ref": "OpenStax OB 2019",
@@ -43,8 +32,8 @@
       "access": "public",
       "license": "CC BY 4.0",
       "fetch": "manual",
-      "url": "https://openstax.org/details/books/organizational-behavior",
-      "note": "Download the official PDF from the OpenStax page, then: python pdf_to_md.py (or any heading-preserving converter) -> books/openstax-organizational-behavior.md"
+      "url": "https://archive.org/download/openstax-organizational-behavior/OrganizationalBehavior-OP_TtwWIeQ.pdf",
+      "note": "Verified ungated text-PDF on Internet Archive (item: openstax-organizational-behavior — NOT the cnx-org-col30687 'derived copy'). curl the url to a local .pdf, then `python scripts/book-pdf-to-md.py <that.pdf> openstax-organizational-behavior` (font-size heading extraction) -> books/<id>.md, then `npm run books:ingest-all -- --no-fetch --only openstax-organizational-behavior`. The openstax.org details page is JS-gated and cannot be fetched headlessly."
     },
     {
       "id": "openstax-principles-of-management",
@@ -55,32 +44,32 @@
       "access": "public",
       "license": "CC BY 4.0",
       "fetch": "manual",
-      "url": "https://openstax.org/details/books/principles-management/",
-      "note": "Download the official PDF from the OpenStax page, then convert -> books/openstax-principles-of-management.md"
+      "url": "https://archive.org/download/PrinciplesofManagement/PrinciplesofManagement-OP_ulIS5L6.pdf",
+      "note": "Verified ungated text-PDF on Internet Archive (item: PrinciplesofManagement). curl the url to a local .pdf, then `python scripts/book-pdf-to-md.py <that.pdf> openstax-principles-of-management` -> books/<id>.md -> ingest --no-fetch. The openstax.org details page is JS-gated."
     },
     {
       "id": "bauer-erdogan-organizational-behavior",
       "title": "Organizational Behavior",
       "ref": "Bauer & Erdogan 2010",
       "author": "Talya Bauer; Berrin Erdogan",
-      "citation": "Bauer, T., & Erdogan, B. (2010). Organizational Behavior. Saylor Foundation / University of Minnesota Libraries Publishing. Licensed under CC BY-NC-SA 3.0.",
+      "citation": "Bauer, T., & Erdogan, B. (2010). Organizational Behavior. Flat World Knowledge (Saylor/UMN). Licensed under CC BY-NC-SA 3.0.",
       "access": "public",
       "license": "CC BY-NC-SA 3.0",
       "fetch": "manual",
-      "url": "https://open.lib.umn.edu/organizationalbehavior/",
-      "note": "Download the PDF/EPUB export from the Pressbooks site, then convert -> books/bauer-erdogan-organizational-behavior.md. NonCommercial license."
+      "url": "https://my.uopeople.edu/pluginfile.php/57436/mod_book/chapter/37376/BUS4402.Textbook.Organizational.Behavior.pdf",
+      "note": "Identity verified from the PDF's own title/copyright page (Flat World Knowledge, code fwk-28776, CC BY-NC-SA 3.0) — NOT the OpenStax book of the same title. The original open.lib.umn.edu copy was removed from its collection. This url is an ungated LMS-hosted PDF that may rotate; cache books/<id>.md so re-ingest does not depend on it. Archive.org has only borrow-gated scans + an HTML-in-zip (no direct PDF). curl the url to a local .pdf, then `python scripts/book-pdf-to-md.py <that.pdf> bauer-erdogan-organizational-behavior` -> books/<id>.md -> ingest --no-fetch. NonCommercial license."
     },
     {
       "id": "renfro-public-administration-essentials",
       "title": "Public Administration: The Essentials",
       "ref": "Renfro (1st ed.)",
       "author": "Jayme L. Renfro",
-      "citation": "Renfro, J. L. Public Administration: The Essentials (1st ed.). University of Northern Iowa. Licensed under CC BY-NC-SA 4.0.",
+      "citation": "Renfro, J. L. (2023). Public Administration: The Essentials. University of Northern Iowa. Licensed under CC BY-NC-SA 4.0.",
       "access": "public",
       "license": "CC BY-NC-SA 4.0",
       "fetch": "manual",
-      "url": "https://open.umn.edu/opentextbooks/textbooks/1558",
-      "note": "Download the PDF from the Open Textbook Library record, then convert -> books/renfro-public-administration-essentials.md. NonCommercial license."
+      "url": "https://manifold.open.umn.edu/projects/public-administration",
+      "note": "Publisher PDF (scholarworks.uni.edu viewcontent.cgi) is behind an AWS WAF JS-challenge — uncurlable. Instead extract the born-digital reader text from this UMN Manifold project via its open JSON API + per-section HTML: run `node scripts/fetch-renfro-manifold.mjs` (enumerates texts -> /api/v1/texts/:id/relationships/text_sections -> fetches /read/<textSlug>/section/<id> -> extracts <div id=manifold-text-section>). Cleaner than the PDF would have been (no OCR). Writes books/renfro-public-administration-essentials.md (~86k words, 11 sections); then ingest --no-fetch. NonCommercial license."
     }
   ]
 }
