@@ -5,7 +5,6 @@ import path from "path";
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
 import { sources } from "./schema";
-import { sql } from "drizzle-orm";
 
 const db = drizzle(neon(process.env.DATABASE_URL!), {});
 
@@ -38,8 +37,12 @@ function parseTitleFromContent(content: string, fallback: string): string {
   for (const line of lines) {
     const trimmed = line.trim();
     if (!trimmed) continue;
-    if (/^#\s+FM\s+\d/i.test(trimmed)) { foundFmHeading = true; continue; }
-    if (foundFmHeading && trimmed && !trimmed.startsWith("#")) return trimmed.replace(/\*\*/g, "");
+    if (/^#\s+FM\s+\d/i.test(trimmed)) {
+      foundFmHeading = true;
+      continue;
+    }
+    if (foundFmHeading && trimmed && !trimmed.startsWith("#"))
+      return trimmed.replace(/\*\*/g, "");
     // Also grab the first H1 that looks like a title (not just "FM X-Y")
     if (/^#\s+[A-Z]/.test(trimmed) && !/^#\s+FM\s+\d/i.test(trimmed)) {
       return trimmed.replace(/^#+\s*/, "").replace(/\*\*/g, "");
@@ -49,34 +52,52 @@ function parseTitleFromContent(content: string, fallback: string): string {
 }
 
 async function main() {
-  const files = fs.readdirSync(MD_DIR).filter(f => f.endsWith(".md"));
+  const files = fs.readdirSync(MD_DIR).filter((f) => f.endsWith(".md"));
   console.log(`Seeding ${files.length} Field Manuals into Neon...`);
 
-  // Clear existing rows
-  await db.execute(sql`TRUNCATE sources RESTART IDENTITY`);
-
-  let inserted = 0;
+  // Upsert on `filename` (unique). Existing rows keep their `id` — important
+  // once user_bookmarks / user_highlights / user_recents / conversations hold
+  // FKs into sources.id. Re-running the seed is idempotent and non-destructive.
+  let upserted = 0;
   for (const file of files) {
     const content = fs.readFileSync(path.join(MD_DIR, file), "utf-8");
     const fm_number = parseFmNumber(file);
     const title = parseTitleFromContent(content, fm_number);
+    const filename = path.basename(file, ".md");
     const char_count = content.length;
     const word_count = content.split(/\s+/).filter(Boolean).length;
 
-    await db.insert(sources).values({
-      fm_number,
-      title,
-      filename: path.basename(file, ".md"),
-      content,
-      word_count,
-      char_count,
-    });
+    await db
+      .insert(sources)
+      .values({
+        fm_number,
+        title,
+        filename,
+        content,
+        word_count,
+        char_count,
+      })
+      .onConflictDoUpdate({
+        target: sources.filename,
+        set: {
+          fm_number,
+          title,
+          content,
+          word_count,
+          char_count,
+        },
+      });
 
-    console.log(`  [${++inserted}/${files.length}] ${fm_number} — ${title.slice(0, 60)}`);
+    console.log(
+      `  [${++upserted}/${files.length}] ${fm_number} — ${title.slice(0, 60)}`,
+    );
   }
 
-  console.log(`\nDone. ${inserted} rows inserted.`);
+  console.log(`\nDone. ${upserted} rows upserted.`);
   process.exit(0);
 }
 
-main().catch(err => { console.error(err); process.exit(1); });
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
