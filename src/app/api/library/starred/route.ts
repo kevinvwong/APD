@@ -10,10 +10,11 @@ import { auth } from "@clerk/nextjs/server";
 import { db } from "@/db";
 import { conversations, messages, sources } from "@/db/schema";
 import { and, eq, desc, sql } from "drizzle-orm";
+import { withApiError } from "@/lib/api-error";
 
 export const runtime = "nodejs";
 
-export async function GET() {
+export const GET = withApiError("library/starred GET", async () => {
   const { userId } = await auth();
   if (!userId)
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
@@ -44,39 +45,50 @@ export async function GET() {
     .limit(200);
 
   return NextResponse.json({ starred: rows });
-}
+});
 
-export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId)
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+export const POST = withApiError(
+  "library/starred POST",
+  async (req: NextRequest) => {
+    const { userId } = await auth();
+    if (!userId)
+      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
-  const body = await req.json().catch(() => ({}));
-  const message_id = Number(body.message_id);
-  const starred = !!body.starred;
-  if (!Number.isInteger(message_id))
-    return NextResponse.json({ error: "missing message_id" }, { status: 400 });
+    const body = await req.json().catch(() => ({}));
+    const message_id = Number(body.message_id);
+    const starred = !!body.starred;
+    if (!Number.isInteger(message_id))
+      return NextResponse.json(
+        { error: "missing message_id" },
+        { status: 400 },
+      );
 
-  // Ownership check via subquery
-  const ownerCheck = await db
-    .select({ id: messages.id })
-    .from(messages)
-    .innerJoin(conversations, eq(messages.conversation_id, conversations.id))
-    .where(and(eq(messages.id, message_id), eq(conversations.user_id, userId)))
-    .limit(1);
+    // Ownership check via subquery
+    const ownerCheck = await db
+      .select({ id: messages.id })
+      .from(messages)
+      .innerJoin(conversations, eq(messages.conversation_id, conversations.id))
+      .where(
+        and(eq(messages.id, message_id), eq(conversations.user_id, userId)),
+      )
+      .limit(1);
 
-  if (ownerCheck.length === 0)
-    return NextResponse.json({ error: "not found" }, { status: 404 });
+    if (ownerCheck.length === 0)
+      return NextResponse.json({ error: "not found" }, { status: 404 });
 
-  await db.update(messages).set({ starred }).where(eq(messages.id, message_id));
+    await db
+      .update(messages)
+      .set({ starred })
+      .where(eq(messages.id, message_id));
 
-  // Touch the conversation's updated_at when a message changes
-  await db
-    .update(conversations)
-    .set({ updated_at: new Date() })
-    .where(
-      sql`${conversations.id} = (SELECT conversation_id FROM ${messages} WHERE id = ${message_id})`,
-    );
+    // Touch the conversation's updated_at when a message changes
+    await db
+      .update(conversations)
+      .set({ updated_at: new Date() })
+      .where(
+        sql`${conversations.id} = (SELECT conversation_id FROM ${messages} WHERE id = ${message_id})`,
+      );
 
-  return NextResponse.json({ ok: true });
-}
+    return NextResponse.json({ ok: true });
+  },
+);

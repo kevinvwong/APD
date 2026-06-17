@@ -83,6 +83,7 @@ export function LibraryClient({
   const [bookmarkList, setBookmarkList] = useState<BookmarkRow[]>(bookmarks);
   const [highlightList, setHighlightList] = useState<HighlightRow[]>(highlights);
   const [starredList, setStarredList] = useState<StarredRow[]>(starred);
+  const [recentList, setRecentList] = useState<RecentRow[]>(recents);
 
   const [tab, setTab] = useState<Tab>(
     conversations.length ? "threads" : "bookmarks",
@@ -93,7 +94,7 @@ export function LibraryClient({
     { key: "bookmarks", label: "Bookmarks", count: bookmarkList.length },
     { key: "highlights", label: "Highlights", count: highlightList.length },
     { key: "starred", label: "Starred", count: starredList.length },
-    { key: "recents", label: "Recently Read", count: recents.length },
+    { key: "recents", label: "Recently Read", count: recentList.length },
   ];
 
   return (
@@ -157,7 +158,9 @@ export function LibraryClient({
         {tab === "starred" && (
           <Starred rows={starredList} setRows={setStarredList} />
         )}
-        {tab === "recents" && <Recents rows={recents} />}
+        {tab === "recents" && (
+          <Recents rows={recentList} setRows={setRecentList} />
+        )}
       </div>
     </div>
   );
@@ -375,24 +378,63 @@ function Bookmarks({
   );
 }
 
-function Recents({ rows }: { rows: RecentRow[] }) {
+function Recents({
+  rows,
+  setRows,
+}: {
+  rows: RecentRow[];
+  setRows: React.Dispatch<React.SetStateAction<RecentRow[]>>;
+}) {
+  const [busyId, setBusyId] = useState<number | null>(null);
+
+  async function remove(fm_id: number) {
+    if (busyId !== null) return;
+    setBusyId(fm_id);
+    try {
+      const res = await fetch(`/api/library/recents?fm_id=${fm_id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("delete failed");
+      setRows((prev) => prev.filter((r) => r.fm_id !== fm_id));
+    } catch {
+      alert("Couldn't remove that. Please try again.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   if (rows.length === 0)
     return <Empty>Nothing read yet — open any manual to get started.</Empty>;
   return (
     <div>
       {rows.map((r) => (
-        <Link
-          key={r.fm_id}
-          href={
-            r.last_anchor ? `/fm/${r.fm_id}#${r.last_anchor}` : `/fm/${r.fm_id}`
-          }
-          className="fmrow"
-        >
-          <span className="fm-num">{r.fm_number ?? "?"}</span>
-          <span className="fm-title">{r.fm_title ?? "(unknown)"}</span>
-          <span className="fm-meta">{fmtDate(r.last_read_at)}</span>
-          <span className="fm-chev">›</span>
-        </Link>
+        <div key={r.fm_id} className="fmrow">
+          <Link
+            href={
+              r.last_anchor
+                ? `/fm/${r.fm_id}#${r.last_anchor}`
+                : `/fm/${r.fm_id}`
+            }
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 18,
+              flex: 1,
+              textDecoration: "none",
+              color: "inherit",
+              minWidth: 0,
+            }}
+          >
+            <span className="fm-num">{r.fm_number ?? "?"}</span>
+            <span className="fm-title">{r.fm_title ?? "(unknown)"}</span>
+            <span className="fm-meta">{fmtDate(r.last_read_at)}</span>
+          </Link>
+          <RowAction
+            label="Remove"
+            busy={busyId === r.fm_id}
+            onClick={() => remove(r.fm_id)}
+          />
+        </div>
       ))}
     </div>
   );

@@ -144,6 +144,10 @@ export const userBookmarks = pgTable(
     created_at: timestamp("created_at").defaultNow().notNull(),
   },
   (t) => ({
+    // The unique index is created NULLS NOT DISTINCT in
+    // drizzle/0003_bookmark_dedup.sql so a whole-FM bookmark (anchor = NULL)
+    // dedupes on upsert instead of inserting duplicate rows. (drizzle-kit's
+    // IndexBuilder can't express NULLS NOT DISTINCT, so it lives in the SQL.)
     uq: uniqueIndex("user_bookmarks_unique").on(t.user_id, t.fm_id, t.anchor),
     userIdx: index("user_bookmarks_user_idx").on(t.user_id, t.created_at),
   }),

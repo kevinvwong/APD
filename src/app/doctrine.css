@@ -1833,3 +1833,32 @@ body:has(.landing) {
 .guide-doc strong {
   font-weight: 600;
 }
+
+/* ===== Library snippet rows (Highlights / Starred) ===== */
+.passage {
+  padding: 14px 4px 16px;
+  border-bottom: 1px solid var(--rule);
+}
+.passage-num {
+  font-family: var(--head);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--olive);
+  white-space: nowrap;
+}
+.passage-crumb {
+  font-size: 13px;
+  color: var(--mute);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.passage-snip {
+  margin-top: 8px;
+  font-family: var(--serif);
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--ink);
+}

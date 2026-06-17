@@ -22,6 +22,13 @@
       "when": 1750200000000,
       "tag": "0002_pgvector",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1750300000000,
+      "tag": "0003_bookmark_dedup",
+      "breakpoints": true
     }
   ]
 }
