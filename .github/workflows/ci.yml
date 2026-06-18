@@ -41,3 +41,8 @@ jobs:
           # Add DATABASE_URL and ANTHROPIC_API_KEY in repo Settings → Secrets.
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: Schema drift check
+        run: npm run db:check
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
