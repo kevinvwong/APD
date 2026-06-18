@@ -39,6 +39,10 @@ function arg(name: string): string | undefined {
   return i >= 0 ? process.argv[i + 1] : undefined;
 }
 
+function flag(name: string): boolean {
+  return process.argv.includes(`--${name}`);
+}
+
 async function main() {
   const file = arg("file");
   const title = arg("title");
@@ -46,6 +50,7 @@ async function main() {
   const author = arg("author");
   const citation = arg("citation");
   const access = arg("access") === "public" ? "public" : "private";
+  const confirmPublic = flag("confirm-public");
 
   if (!file || !title || !ref) {
     console.error(
@@ -53,6 +58,22 @@ async function main() {
         "See the header of scripts/ingest-book.ts for full usage.",
     );
     process.exit(1);
+  }
+
+  // Books are copyrighted by default — refuse to ingest as `public` unless the
+  // caller explicitly opts in with --confirm-public. Without this, a careless
+  // `--access public` flag would expose in-copyright material to anonymous users.
+  if (access === "public" && !confirmPublic) {
+    console.error(
+      "Books are private by design. To override, pass --confirm-public " +
+        "alongside --access public.",
+    );
+    process.exit(1);
+  }
+  if (access === "public" && confirmPublic) {
+    console.warn(
+      "WARNING: ingesting book as access=public. Confirm you hold the rights.",
+    );
   }
 
   const abs = path.resolve(file);

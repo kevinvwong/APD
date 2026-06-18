@@ -52,6 +52,11 @@ export const POST = withApiError(
       const ids = body.ids
         .map((n: unknown) => Number(n))
         .filter((n: number) => Number.isInteger(n) && n > 0);
+      if (ids.length > 100)
+        return NextResponse.json(
+          { error: "Too many IDs (max 100)" },
+          { status: 400 },
+        );
       if (ids.length === 0) return NextResponse.json({ ok: true, added: 0 });
       const values = ids.map((fm_id: number) => ({
         user_id: userId,
